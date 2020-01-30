@@ -1,0 +1,8 @@
+matplotlib
+networkx
+numpy
+scipy
+sklearn
+torch
+torchvision
+tqdm

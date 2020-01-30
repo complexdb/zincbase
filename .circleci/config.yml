@@ -1,0 +1,20 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Run Tests
+          command: |
+            python3 -m pip install -r requirements.txt
+            python3 -m doctest zincbase/zincbase.py
+            python3 test/test_main.py
+            python3 test/test_lists.py
+            python3 test/test_graph.py
+            python3 test/test_nn_basic.py
+            python3 test/test_nn.py
+            python3 test/test_neg_examples.py
+            python3 test/test_truthiness.py
