@@ -89,6 +89,8 @@ From docs/ dir: `make html`. If something changed a lot: `sphinx-apidoc -o . ..`
 
 ## Pushing to pypi
 
+NOTE: This is now all automatic via CircleCI, but here are the manual steps for reference:
+
 * Edit `setup.py` as appropriate (probably not necessary)
 * Edit the version in `zincbase/__init__.py`
 * From the top project directory `python setup.py sdist bdist_wheel --universal`
