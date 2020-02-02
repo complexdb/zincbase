@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   test:
@@ -23,9 +23,6 @@ jobs:
   build:
     docker:
       - image: python:3.7
-    branches:
-      only:
-        - master
     steps:
       - checkout
       - run:
@@ -34,3 +31,14 @@ jobs:
       - run:
           name: Upload to pypi
           command: twine upload dist/*
+workflows:
+  version: 2.1
+  build_and_test:
+    jobs:
+      - test
+      - build:
+          filters:
+            branches:
+              only:
+                - master
+
