@@ -1,15 +1,14 @@
-[![CircleCI](https://circleci.com/gh/tomgrek/zincbase.svg?style=svg)](https://circleci.com/gh/complexdb/zincbase)
+[![CircleCI](https://circleci.com/gh/complexdb/zincbase.svg?style=svg)](https://circleci.com/gh/complexdb/zincbase)
 [![DOI](https://zenodo.org/badge/183831265.svg)](https://zenodo.org/badge/latestdoi/183831265)
 [![Documentation Status](https://readthedocs.org/projects/zincbase/badge/?version=latest)](https://zincbase.readthedocs.io/en/latest/?badge=latest)
 
 <img src="https://user-images.githubusercontent.com/2245347/57199440-c45daf00-6f33-11e9-91df-1a6a9cae6fb7.png" width="140" alt="Zincbase logo">
 
-ZincBase is a state of the art knowledge base. It does the following:
+ZincBase is a state of the art knowledge base and complex simulation suite. It does the following:
 
-* Extract facts (aka triples and rules) from unstructured data/text
-* Store and retrieve those facts efficiently
-* Build them into a graph
+* Store and retrieve graph structured data efficiently.
 * Provide ways to query the graph, including via bleeding-edge graph neural networks.
+* Simulate complex effects playing out across the graph and see how predictions change.
 
 Zincbase exists to answer questions like "what is the probability that Tom likes LARPing", or "who likes LARPing", or "classify people into LARPers vs normies", or simulations like "what happens if all the LARPers become normies".
 
