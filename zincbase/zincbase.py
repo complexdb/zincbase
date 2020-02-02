@@ -177,6 +177,28 @@ class KB():
             graph = self.G
         neighbors = graph[node]
         return [x for x in neighbors.items()]
+    
+    def neighbors(self, node):
+        """Return neighbors of node and predicates that connect them.
+
+        :param str node: Name of the node
+        :return: List[(node_name, List[predicate])]
+
+        :Example:
+
+        >>> kb = KB()
+        >>> kb.store('knows(tom, shamala)')
+        0
+        >>> kb.neighbors('tom')
+        [('shamala', [{'pred': 'knows'}])]"""
+        neighbors = self._valid_neighbors(node)
+        l = []
+        for n in neighbors:
+            how = []
+            for rel in n[1]:
+                how.append(n[1][rel])
+            l.append((n[0], how))
+        return l
 
     def bfs(self, start_node, target_node, max_depth=10, reverse=False):
         """Find a path from start_node to target_node"""

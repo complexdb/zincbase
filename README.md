@@ -89,8 +89,12 @@ From docs/ dir: `make html`. If something changed a lot: `sphinx-apidoc -o . ..`
 
 # TODO
 
-* Add documentation
+* Refactor so node and edge are their own class
+* Query all nodes (and edges) by attribute
+* Rules to say 'on change of attribute, run this small program and propagate changes'
+* * Will enable advanced simulation beginning with Abelian sandpile
 * to_csv method
+* To DOT, for visualization
 * utilize postgres as backend triple store
 * The to_csv/from_csv methods do not yet support node attributes.
 * Add relation extraction from arbitrary unstructured text
