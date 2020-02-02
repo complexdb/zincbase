@@ -11,15 +11,17 @@ ZincBase is a state of the art knowledge base. It does the following:
 * Build them into a graph
 * Provide ways to query the graph, including via bleeding-edge graph neural networks.
 
-Zincbase exists to answer questions like "what is the probability that Tom likes LARPing", or "who likes LARPing", or "classify people into LARPers vs normies":
+Zincbase exists to answer questions like "what is the probability that Tom likes LARPing", or "who likes LARPing", or "classify people into LARPers vs normies", or simulations like "what happens if all the LARPers become normies".
 
 <img src="https://user-images.githubusercontent.com/2245347/57595488-2dc45b80-74fa-11e9-80f4-dc5c7a5b22de.png" width="320" alt="Example graph for reasoning">
 
-It combines the latest in neural networks with symbolic logic (think expert systems and prolog) and graph search.
+It combines the latest in neural networks with symbolic logic (think expert systems and prolog), graph search, and complexity theory.
 
 View full documentation [here](https://zincbase.readthedocs.io).
 
 ## Quickstart
+
+`pip3 install zincbase`
 
 ```
 from zincbase import KB
