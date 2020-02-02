@@ -34,13 +34,16 @@ jobs:
           command: python setup.py sdist bdist_wheel --universal
       - run:
           name: Upload to pypi
-          command: twine upload dist/*
+          command: twine upload dist/* || true
 workflows:
   version: 2.1
   build_and_test:
     jobs:
-      - test
+      - test:
+          name: test_first
       - build:
+          requires:
+            - test_first
           filters:
             branches:
               only:
