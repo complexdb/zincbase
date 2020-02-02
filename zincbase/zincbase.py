@@ -199,6 +199,31 @@ class KB():
                 how.append(n[1][rel])
             l.append((n[0], how))
         return l
+    
+    def filter(self, filter_condition, candidate_nodes=None):
+        """Filter (ie query) nodes by attributes.
+
+        :param function filter_condition: Test function
+        :param List candidate_nodes: Nodes to test (optional; defaults to whole graph)
+
+        :Example:
+
+        >>> kb = KB()
+        >>> kb.store('person(tom)')
+        0
+        >>> kb.attr('tom', {'cats': 0})
+        >>> list(kb.filter(lambda x: x['cats'] < 1))
+        ['tom']"""
+        if candidate_nodes is None:
+            candidate_nodes = self.G.nodes
+        for node in candidate_nodes:
+            try:
+                if filter_condition(self.node(node)):
+                    yield node
+            except KeyError:
+                # maybe node doesn't have the attr set
+                pass
+
 
     def bfs(self, start_node, target_node, max_depth=10, reverse=False):
         """Find a path from start_node to target_node"""
