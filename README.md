@@ -87,6 +87,13 @@ There is also a script to evaluate performance on FB15k: `python examples/fb15k_
 
 From docs/ dir: `make html`. If something changed a lot: `sphinx-apidoc -o . ..`
 
+## Pushing to pypi
+
+* Edit `setup.py` as appropriate (probably not necessary)
+* Edit the version in `zincbase/__init__.py`
+* From the top project directory `python setup.py sdist bdist_wheel --universal`
+* `twine upload dist/*`
+
 # TODO
 
 * Refactor so node and edge are their own class
