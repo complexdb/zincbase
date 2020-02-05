@@ -59,11 +59,7 @@ _Note:_ Requirements might differ for PyTorch depending on your system.
 ```
 python test/test_main.py
 python test/test_graph.py
-python test/test_lists.py
-python test/test_nn_basic.py
-python test/test_nn.py
-python test/test_neg_examples.py
-python test/test_truthiness.py
+... etc ... all the test files there
 python -m doctest zincbase/zincbase.py
 ```
 
@@ -99,7 +95,7 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 # TODO
 
-* Refactor so node and edge are their own class
+* Refactor so edge is its own class
 * Query all edges by attribute
 * Rules (observables) to say 'on change of attribute, run this small program and propagate changes'
 * * Will enable advanced simulation beginning with Abelian sandpile
