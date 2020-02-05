@@ -11,13 +11,28 @@ kb.store('knows(tom, shamala)')
 assert kb.neighbors('tom') == [('shamala', [{'pred': 'knows'}])]
 
 kb.attr('tom', { 'grains': 0 })
-kb.attr('shamala', { 'grains': 5 })
+
+tom = kb.node('tom')
+assert tom.grains == 0
+assert tom.i_dont_exist is None
+assert tom['i_dont_exist'] is None
+
+kb.attr('shamala', { 'grains': 4 })
+shamala = kb.node('shamala')
+assert shamala.grains == 4
+shamala.grains += 1
+assert shamala.grains == 5
+assert shamala['grains'] == 5
+shamala['grains'] += 1
+assert shamala['grains'] == 6
+
 kb.store('person(jeraca)')
 kb.attr('jeraca', { 'grains': 3 })
 
 zero_grains = list(kb.filter(lambda x: x['grains'] == 0))
 assert len(zero_grains) == 1
 assert zero_grains[0] == 'tom'
+assert zero_grains[0] != 'shamala'
 
 zero_anything = list(kb.filter(lambda x: x['anything'] == 0))
 assert len(zero_anything) == 0
