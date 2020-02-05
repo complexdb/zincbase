@@ -1,7 +1,5 @@
 import networkx as nx
 
-# it should also have a .neighbors prop
-
 class Node:
 
     def __init__(self, kb, name, data):
