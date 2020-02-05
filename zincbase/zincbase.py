@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 
+from graph import Node
 from logic.Goal import Goal
 from logic.Negative import Negative
 from logic.Term import Term
@@ -147,7 +148,7 @@ class KB():
         >>> kb.store('eats(tom, rice)')
         0
         >>> kb.attr('tom', {'is_person': True})
-        >>> kb.node('tom')
+        >>> kb.node('tom').attrs
         {'is_person': True}"""
 
         nx.set_node_attributes(self.G, {node_name: attributes})
@@ -164,11 +165,13 @@ class KB():
         >>> kb.store('eats(tom, rice)')
         0
         >>> kb.node('tom')
+        tom
+        >>> kb.node('tom').attrs
         {}
         >>> kb.attr('tom', {'is_person': True})
-        >>> kb.node('tom')
+        >>> kb.node('tom').attrs
         {'is_person': True}"""
-        return self.G.nodes(data=True)[node_name]
+        return Node(self, node_name, self.G.nodes(data=True)[node_name])
 
     def _valid_neighbors(self, node, reverse=False):
         if reverse:
@@ -213,12 +216,13 @@ class KB():
         0
         >>> kb.attr('tom', {'cats': 0})
         >>> list(kb.filter(lambda x: x['cats'] < 1))
-        ['tom']"""
+        [tom]"""
         if candidate_nodes is None:
             candidate_nodes = self.G.nodes
         for node in candidate_nodes:
+            node = self.node(node)
             try:
-                if filter_condition(self.node(node)):
+                if filter_condition(node):
                     yield node
             except KeyError:
                 # maybe node doesn't have the attr set
@@ -927,9 +931,9 @@ class KB():
                         else:
                             is_neg = False
                         triples.append((subject, r.head.pred, object_,
-                            self.node(subject),
+                            self.node(subject).attrs,
                             edge,
-                            self.node(object_),
+                            self.node(object_).attrs,
                             is_neg
                         ))
                     else:

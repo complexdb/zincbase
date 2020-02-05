@@ -6,13 +6,13 @@ from zincbase import KB
 kb = KB()
 b = kb.store('c(x)'); assert b == 0
 b = kb.query('c(X)'); assert isinstance(b, types.GeneratorType); b = list(b); 
-assert len(b) == 1; assert b[0]['X'] == 'x'; assert kb.node(b[0]['X']) == {}
+assert len(b) == 1; assert b[0]['X'] == 'x'; assert kb.node(b[0]['X']) == 'x'; assert kb.node(b[0]['X']).attrs == {}
 b = kb.store('c(y)'); assert b == 1
 b = kb.delete_rule(1); assert b; assert not list(kb.query('c(y)'))
 b = kb.store('c(y)'); assert b == 1
 b = kb.query('c(X)'); b = list(b); assert len(b) == 2; assert b[0]['X'] in ('x', 'y');
-assert b[1]['X'] in ('x', 'y'); assert b[0]['X'] != b[1]['X']; assert kb.node(b[0]['X']) == {}
-assert kb.node(b[1]['X']) == {}
+assert b[1]['X'] in ('x', 'y'); assert b[0]['X'] != b[1]['X']; assert kb.node(b[0]['X']).attrs == {}
+assert kb.node(b[1]['X']).attrs == {}
 b = kb.store('loves(tom, shamala)'); assert 'tom' in kb.G; assert 'shamala' in kb.G
 assert kb.G['tom']['shamala'][0]['pred'] == 'loves'
 b = kb.query('loves(X, Y)'); b = list(b); assert len(b) == 1; assert b[0]['X'] == 'tom'; assert b[0]['Y'] == 'shamala'
