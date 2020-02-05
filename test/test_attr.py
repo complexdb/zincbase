@@ -56,4 +56,17 @@ assert as_list[0] in ['tom', 'shamala']
 assert as_list[1] in ['tom', 'shamala']
 assert as_list[0] != as_list[1]
 
+nodes = kb.filter(lambda x: True)
+as_list = list(nodes)
+assert len(as_list) == 3
+jeraca = kb.node('jeraca')
+assert len(jeraca.neighbors) == 0
+shamala = kb.node('shamala')
+assert len(shamala.neighbors) == 0
+tom = kb.node('tom')
+assert len(tom.neighbors) == 1
+assert tom.neighbors[0][0] == 'shamala'
+assert len(tom.neighbors[0][1]) == 1
+assert tom.neighbors[0][1][0]['pred'] == 'knows'
+
 print('All attribute tests passed.')

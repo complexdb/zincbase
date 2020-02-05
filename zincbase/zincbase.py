@@ -171,7 +171,7 @@ class KB():
         >>> kb.attr('tom', {'is_person': True})
         >>> kb.node('tom').attrs
         {'is_person': True}"""
-        return Node(self.G, node_name, self.G.nodes(data=True)[node_name])
+        return Node(self, node_name, self.G.nodes(data=True)[node_name])
 
     def _valid_neighbors(self, node, reverse=False):
         if reverse:
