@@ -854,7 +854,7 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
-        self.rules.append(Rule(statement, graph=self.G))
+        self.rules.append(Rule(statement, kb=self))
         if edge_attributes:
             parts = split_to_parts(statement)
             self.edge_attr(parts[0], parts[1], parts[2], edge_attributes)

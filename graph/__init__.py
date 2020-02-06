@@ -95,6 +95,6 @@ class Node:
         else:
             self._watches[attribute_or_watch_id] = []
     
-    def got_new_neighbor(self):
-        """Do something when node receives new neighbor"""
-        pass
+    def watch_for_new_neighbor(self, fn):
+        """Execute `fn` when node receives a new neighbor."""
+        self.__setattr__('_new_neighbor_fn', fn)
