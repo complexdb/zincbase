@@ -69,4 +69,25 @@ assert tom.neighbors[0][0] == 'shamala'
 assert len(tom.neighbors[0][1]) == 1
 assert tom.neighbors[0][1][0]['pred'] == 'knows'
 
+fn_was_called = False
+def watch_fn(node, prev_val):
+    global fn_was_called
+    fn_was_called = True
+    assert prev_val == 0
+    assert node.grains == 1
+    assert len(node.neighbors) == 1
+    assert kb.node(node.neighbors[0][0]) == 'shamala'
+
+nights_watch = tom.watch('grains', watch_fn)
+tom.grains += 1
+assert fn_was_called
+fn_was_called = False
+tom.remove_watch(nights_watch)
+tom.grains += 1
+assert not fn_was_called
+nights_watch = tom.watch('grains', watch_fn)
+tom.remove_watch('grains')
+tom.grains += 1
+assert not fn_was_called
+
 print('All attribute tests passed.')
