@@ -46,7 +46,13 @@ class Node:
     def attrs(self):
         """Returns attributes of the node stored in the KB
         """
-        return self._kb.G.nodes(data=True)[self._name]
+        attributes = self._kb.G.nodes(data=True)[self._name]
+        try:
+            del attributes['_watches']
+            del attributes['_new_neighbor_fn']
+        except:
+            pass
+        return attributes
     
     @property
     def neighbors(self):
@@ -88,3 +94,7 @@ class Node:
             self._watches[attribute_or_watch_id[0]].pop(attribute_or_watch_id[1])
         else:
             self._watches[attribute_or_watch_id] = []
+    
+    def got_new_neighbor(self):
+        """Do something when node receives new neighbor"""
+        pass
