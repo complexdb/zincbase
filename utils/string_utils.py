@@ -27,7 +27,7 @@ def split_to_parts(line):
     if len(sub_exprs) != 2:
         raise Exception('Syntax error')
     atoms = split_on(sub_exprs[1][:-1], ',')
-    return (atoms[0], sub_exprs[0], atoms[1])
+    return (atoms[0], sub_exprs[0], atoms[1] if len(atoms) > 1 else None)
 
 def cleanse(line):
     line = re.sub('[ ./()-]', '_', line)

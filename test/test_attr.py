@@ -90,4 +90,13 @@ tom.remove_watch('grains')
 tom.grains += 1
 assert not fn_was_called
 
+kb.store('node(i_am_node)', node_attributes=[{'foo': 'bar'}])
+new_node = kb.node('i_am_node')
+assert new_node.foo == 'bar'
+kb.store('connected_nodes(3, 4)', node_attributes=[{'x': 3}, {'x': 4}])
+_3 = kb.node(3)
+_4 = kb.node(4)
+assert _3.x == 3
+assert _4.x == 4
+
 print('All attribute tests passed.')

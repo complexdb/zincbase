@@ -172,6 +172,7 @@ class KB():
         >>> kb.attr('tom', {'is_person': True})
         >>> kb.node('tom').attrs
         {'is_person': True}"""
+        node_name = str(node_name)
         try:
             node = self._node_cache[node_name]
         except:
@@ -836,16 +837,20 @@ class KB():
         assist when building the model.
 
         :param str statement: Fact or rule to store in the KB.
-        :param list<dict> node_attributes: List of length 2 with each element being a \
-        dict of items to set on the nodes (in order subject, object).
+        :param list<dict> node_attributes: List with the same number of elements as there \
+        are nodes in the statement, with each element being a \
+        dict of items to set on the nodes.
         :param dict edge_attributes: Dictionary of attributes to set on the edge. May \
         include truthiness which, if < 0, automatically makes the rule a negative example.
         :return: the id of the fact/rule
 
         :Example:
 
-        >>> KB().store('a(a)')
-        0"""
+        >>> kb = KB()
+        >>> kb.store('a(a)')
+        0
+        >>> kb.store('node(x)', node_attributes=[{'node_number': 1}])
+        1"""
         statement = strip_all_whitespace(statement)
         if 'truthiness' in edge_attributes and edge_attributes['truthiness'] < 0:
             if statement[0] != '~':
@@ -867,7 +872,8 @@ class KB():
         if node_attributes:
             parts = split_to_parts(statement)
             self.attr(parts[0], node_attributes[0])
-            self.attr(parts[2], node_attributes[1])
+            if parts[2] is not None:
+                self.attr(parts[2], node_attributes[1])
         return len(self.rules) - 1
 
     def to_tensorboard_projector(self, embeddings_filename, labels_filename, filter_fn=None):
