@@ -15,7 +15,7 @@ class Term:
                 self.pred = '__list__'
             else:
                 arr.reverse()
-                first = Term('__list__', [], graph=graph)
+                first = Term('__list__', [])
                 for part in arr:
                     first = Term('__list__', [Term(part, kb=kb), first], kb=kb)
                 self.pred = first.pred

@@ -48,4 +48,4 @@ def process(term, bindings, graph=None):
         if not a:
             return None
         args.append(a)
-    return Term(term.pred, args, graph=graph)
+    return Term(term.pred, args)
