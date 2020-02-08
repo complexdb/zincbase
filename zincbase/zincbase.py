@@ -42,6 +42,7 @@ class KB():
         self._relation2id = {}
         self._encoded_triples = []
         self._encoded_neg_examples = []
+        self._node_cache = {}
         self._kg_model = None
         self._knn = None
         self._knn_index = []
@@ -171,7 +172,12 @@ class KB():
         >>> kb.attr('tom', {'is_person': True})
         >>> kb.node('tom').attrs
         {'is_person': True}"""
-        return Node(self, node_name, self.G.nodes(data=True)[node_name])
+        try:
+            node = self._node_cache[node_name]
+        except:
+            node = Node(self, node_name, self.G.nodes(data=True)[node_name])
+            self._node_cache[node_name] = node
+        return node
 
     def _valid_neighbors(self, node, reverse=False):
         if reverse:
