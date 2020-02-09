@@ -46,13 +46,15 @@ class Term:
                         if added_node_1:
                             node = kb.node(str(arg2))
                             try:
-                                node._new_neighbor_fn(str(arg))
+                                if not kb._dont_propagate:
+                                    node._new_neighbor_fn(str(arg))
                             except Exception as e:
                                 pass
                         if added_node_2:
                             node = kb.node(str(arg))
                             try:
-                                node._new_neighbor_fn(str(arg2))
+                                if not kb._dont_propagate:
+                                    node._new_neighbor_fn(str(arg2))
                             except Exception as e:
                                 pass
 

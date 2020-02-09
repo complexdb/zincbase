@@ -8,6 +8,7 @@ class Node:
     def __init__(self, kb, name, data, watches=[]):
         super().__setattr__('_kb', kb)
         super().__setattr__('_name', name)
+        super().__setattr__('_recursion_depth', 0)
         nx.set_node_attributes(self._kb.G, {self._name: data})
         self._watches = defaultdict(list)
         for watch in watches:
@@ -29,12 +30,17 @@ class Node:
             return None
 
     def __setattr__(self, key, value):
+        if self._recursion_depth > self._kb._MAX_RECURSION:
+            return False
+        super().__setattr__('_recursion_depth', self._recursion_depth + 1)
         attrs = self._kb.G.nodes(data=True)[self._name]
         prev_val = attrs.get(key, None)
         attrs.update({key: value})
         nx.set_node_attributes(self._kb.G, {self._name: attrs})
-        for watch_fn in self._watches.get(key, []):
-            watch_fn(self, prev_val)
+        if not self._kb._dont_propagate:
+            for watch_fn in self._watches.get(key, []):
+                watch_fn(self, prev_val)
+        super().__setattr__('_recursion_depth', self._recursion_depth - 1)
 
     def __getitem__(self, key):
         return self.__getattr__(key)
@@ -66,6 +72,12 @@ class Node:
         Function takes two args: `node` which has access to all
         its own attributes, including neighbors and edges, and the second
         arg is the previous value of the attribute that changed.
+
+        As cycles are possible in the graph, changes to a node attribute, that
+        change its neighbors attributes etc, may eventually propagate back
+        to change the original node's attribute again, ad infinitum until
+        the stack explodes. To prevent this, in one "update cycle", more
+        than `kb._MAX_RECURSION` updates will be rejected.
 
         :returns int: id of the watch
 

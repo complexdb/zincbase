@@ -1,4 +1,5 @@
 from collections import deque, defaultdict
+from contextlib import contextmanager
 import copy
 import csv
 import math
@@ -37,6 +38,10 @@ class KB():
     def __init__(self):
         self.G = nx.MultiDiGraph()
         self.rules = []
+        self._dont_propagate = False
+        # When a node watches a variable, cycles are possible whereby the
+        # change propagates back to itself: _MAX_RECURSION sets max cycles
+        self._MAX_RECURSION = 1
         self._neg_examples = []
         self._entity2id = {}
         self._relation2id = {}
@@ -153,6 +158,12 @@ class KB():
         {'is_person': True}"""
 
         nx.set_node_attributes(self.G, {node_name: attributes})
+    
+    @contextmanager
+    def dont_propagate(self):
+        self._dont_propagate = True
+        yield self._dont_propagate
+        self._dont_propagate = False
 
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.

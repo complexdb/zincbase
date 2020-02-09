@@ -51,4 +51,36 @@ node4.grains += 1
 assert node4.grains == 3
 assert node5.grains == 1
 
+with kb.dont_propagate():
+    assert kb._dont_propagate
+    node4.grains += 1
+
+assert kb._dont_propagate == False
+assert node4.grains == 4
+assert node5.grains == 1
+
+assert kb._MAX_RECURSION == 1
+times_called = 0
+def cycle_watch_fn(node, prev_value):
+    global times_called
+    times_called += 1
+    for n, edges in node.neighbors:
+        kb.node(n).grains += 1
+kb.store('connected(node_a, node_a)')
+node_a = kb.node('node_a')
+node_a.grains = 0
+node_a.watch('grains', cycle_watch_fn)
+node_a.grains = 1
+assert times_called == 2
+assert node_a.grains == 2
+
+node_a.grains = 3
+assert times_called == 4
+assert node_a.grains == 4
+
+kb._MAX_RECURSION = 2
+node_a.grains = 5
+assert times_called == 7
+assert node_a.grains == 7
+
 print('All propagation tests passed.')
