@@ -1,4 +1,5 @@
 from collections import defaultdict
+import threading
 
 import networkx as nx
 
@@ -37,9 +38,12 @@ class Node:
         prev_val = attrs.get(key, None)
         attrs.update({key: value})
         nx.set_node_attributes(self._kb.G, {self._name: attrs})
-        if not self._kb._dont_propagate:
+        if not self._kb._dont_propagate and prev_val != value:
             for watch_fn in self._watches.get(key, []):
-                watch_fn(self, prev_val)
+                p = threading.Thread(target=watch_fn, args=(self, prev_val))
+                p.start()
+                #watch_fn(self, prev_val)
+            
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
 
     def __getitem__(self, key):

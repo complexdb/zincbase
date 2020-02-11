@@ -83,4 +83,7 @@ node_a.grains = 5
 assert times_called == 7
 assert node_a.grains == 7
 
+node_a.grains = 7
+assert times_called == 7
+
 print('All propagation tests passed.')
