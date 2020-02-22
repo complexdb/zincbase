@@ -1,5 +1,5 @@
 from pip._internal.req import parse_requirements
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from zincbase import __version__
 
@@ -16,10 +16,12 @@ setup(name='zincbase',
       author='ComplexDB',
       author_email='tom@complexdb.com',
       license='MIT',
-      packages=['zincbase'],
+      packages=find_packages(),
       classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
       ],
-      install_requires=_parse("requirements.txt"))
+      install_requires=_parse("requirements.txt"),
+      python_requires='>=3.6'
+      )
