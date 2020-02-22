@@ -16,12 +16,13 @@ setup(name='zincbase',
       author='ComplexDB',
       author_email='tom@complexdb.com',
       license='MIT',
-      packages=find_packages(),
+      packages=find_packages(exclude=['test']),
       classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
       ],
+      include_package_data=True,
       install_requires=_parse("requirements.txt"),
       python_requires='>=3.6'
       )
