@@ -1,6 +1,10 @@
 [![CircleCI](https://circleci.com/gh/complexdb/zincbase.svg?style=svg)](https://circleci.com/gh/complexdb/zincbase)
 [![DOI](https://zenodo.org/badge/183831265.svg)](https://zenodo.org/badge/latestdoi/183831265)
 [![Documentation Status](https://readthedocs.org/projects/zincbase/badge/?version=latest)](https://zincbase.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version fury.io](https://badge.fury.io/py/zincbase.svg)](https://pypi.python.org/pypi/zincbase/)
+[![PyPI download month](https://img.shields.io/pypi/dm/zincbase.svg)](https://pypi.python.org/pypi/zincbase/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/zincbase.svg)](https://pypi.python.org/pypi/zincbase/)
+[![PyPI license](https://img.shields.io/pypi/l/zincbase.svg)](https://pypi.python.org/pypi/zincbase/)
 
 <img src="https://user-images.githubusercontent.com/2245347/57199440-c45daf00-6f33-11e9-91df-1a6a9cae6fb7.png" width="140" alt="Zincbase logo">
 
