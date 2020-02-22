@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 
-from .graph.Node import Node
+from zincbase.graph.Node import Node
 from zincbase.logic.Goal import Goal
 from zincbase.logic.Negative import Negative
 from zincbase.logic.Term import Term
