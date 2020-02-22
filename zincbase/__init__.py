@@ -1,3 +1,3 @@
-from .zincbase import KB
+from .zb import KB
 
 __version__ = '0.5.1'

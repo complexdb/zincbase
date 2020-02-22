@@ -33,7 +33,7 @@ class KB():
 
     >>> kb = KB()
     >>> kb.__class__
-    <class 'zincbase.KB'>
+    <class 'zb.KB'>
     """
     def __init__(self):
         self.G = nx.MultiDiGraph()
