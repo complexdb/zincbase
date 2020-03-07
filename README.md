@@ -46,6 +46,18 @@ kb.estimate_triple_prob('fiji', 'locatedin', 'melanesia')
 0.8467
 ```
 
+## Complexity (Graph/Network) Examples
+
+Two such examples are included (right now; we intend to include more soon such
+as virus spread and neural nets that communicate.) The examples are
+basic ones: Conway's Game of Life and the Abelian Sandpile. Here are some
+screencaps; source code is [here](https://github.com/complexdb/zincbase/tree/master/examples),
+performance can be lightning fast depending how you tweak Zincbase recursion
+and propagation settings.
+
+![Peek 2020-03-06 23-53](https://user-images.githubusercontent.com/2245347/76139614-94c17c80-6006-11ea-8690-9059cd1a4672.gif)
+![Peek 2020-03-06 23-55](https://user-images.githubusercontent.com/2245347/76139591-4a400000-6006-11ea-96fc-ab3943834886.gif)
+
 # Requirements
 
 * Python 3

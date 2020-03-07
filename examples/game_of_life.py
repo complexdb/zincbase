@@ -41,6 +41,7 @@ def graph_to_array():
     return arr
 
 cv2.namedWindow("gol", cv2.WINDOW_NORMAL)
+
 while True:
     arr = graph_to_array()
     arr = torch.tensor(arr).view(MAX_Y, MAX_X)
