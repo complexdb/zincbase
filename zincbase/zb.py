@@ -39,9 +39,9 @@ class KB():
         self.G = nx.MultiDiGraph()
         self.rules = []
         self._dont_propagate = False
-        # When a node watches a variable, cycles are possible whereby the
-        # change propagates back to itself: _MAX_RECURSION sets max cycles
         self._MAX_RECURSION = 1
+        self._PROPAGATION_LIMIT = math.inf
+        self._global_propagations = 0
         self._neg_examples = []
         self._entity2id = {}
         self._relation2id = {}
@@ -74,6 +74,49 @@ class KB():
         torch.random.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
+    
+    def set_recursion_limit(self, recursions):
+        """Set a recursion limit for the KB. Complex arrangements
+        can end up propagating back to themselves; permit this only
+        a certain number of times. Also, `with kb.dont_propagate()`
+        will prohibit any cycles, overriding this limit.
+
+        This also sets the global Python recursion limit equivalently,
+        up to a (high but often reasonable) maximum of 50,000. 
+        (This may not be appropriate if you have very complex, memory-hungry
+        watch functions; it may require some trial-and-error tweaking.)
+
+        The default Zincbase recursion limit is 1 which is very low.
+        Depending on your simulation, increasing this value may offer
+        magnitudes higher performance.
+
+        :param int recursions: Limit on recursions to same node within
+        one update.
+
+        :Example:
+
+        >>> KB().set_recursion_limit(1e5)
+        """
+        limit = min(int(recursions), int(5e5))
+        sys.setrecursionlimit(max(limit, 3000))
+        self._MAX_RECURSION = recursions
+    
+    def set_propagation_limit(self, propagations):
+        """Set a limit on the number of times one change to a node
+        attribute may propagate to its neighbors, their neighbors, etc.
+        If this limit is 0 it's equivalent to `with kb.dont_propagate():`
+        By default, the limit is infinity (i.e. full global network effects)
+
+        Consider using together with `kb.set_recursion_limit`.
+
+        :param int propagations: Limit on propagations (ie, global network
+        effects)
+
+        :Example:
+        >>> kb = KB()
+        >>> kb.set_propagation_limit(1)
+        """
+        self._PROPAGATION_LIMIT = propagations
 
     def edge_attr(self, sub, pred, ob, attributes):
         """Set attributes on a predicate between subject and object.

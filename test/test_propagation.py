@@ -78,9 +78,31 @@ node_a.grains = 3
 assert times_called == 4
 assert node_a.grains == 4
 
-kb._MAX_RECURSION = 2
+kb.set_recursion_limit(2)
 node_a.grains = 5
 assert times_called == 7
 assert node_a.grains == 7
+
+kb = KB()
+kb.store('node(node1)', node_attributes=[{'value': 0}])
+kb.store('node(node2)', node_attributes=[{'value': 0}])
+kb.store('node(node3)', node_attributes=[{'value': 0}])
+kb.store('connected(node1, node2)')
+kb.store('connected(node2, node3)')
+def watch_fn(node, prev_val):
+    for n, pred in node.neighbors:
+        kb.node(n).value += 1
+kb.node('node1').watch('value', watch_fn)
+kb.node('node2').watch('value', watch_fn)
+kb.node('node1').value += 1
+assert kb.node('node1').value == 1
+assert kb.node('node2').value == 1
+assert kb.node('node3').value == 1
+kb.set_propagation_limit(1)
+kb.node('node1').value += 1
+assert kb.node('node1').value == 2
+kb.node('node2').value == 2
+kb.node('node3').value == 1
+
 
 print('All propagation tests passed.')

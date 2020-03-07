@@ -30,8 +30,11 @@ class Node:
             return None
 
     def __setattr__(self, key, value):
+        if self._kb._global_propagations > self._kb._PROPAGATION_LIMIT:
+            return False
         if self._recursion_depth > self._kb._MAX_RECURSION:
             return False
+        self._kb._global_propagations += 1
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
         attrs = self._kb.G.nodes(data=True)[self._name]
         prev_val = attrs.get(key, None)
@@ -41,6 +44,7 @@ class Node:
             for watch_fn in self._watches.get(key, []):
                 watch_fn(self, prev_val)
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
+        self._kb._global_propagations -= 1
 
     def __getitem__(self, key):
         return self.__getattr__(key)
