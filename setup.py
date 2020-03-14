@@ -24,5 +24,8 @@ setup(name='zincbase',
       ],
       include_package_data=True,
       install_requires=_parse("requirements.txt"),
+      extras_require={
+        'web': ['flask-socketio', 'redis']
+      },
       python_requires='>=3.6'
       )

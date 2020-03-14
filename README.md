@@ -96,6 +96,14 @@ It tests the hardest Countries task and prints out the AUC ROC, which should be
 
 There is also a script to evaluate performance on FB15k: `python examples/fb15k_mrr.py`.
 
+## Running the web UI
+
+There are a couple of extra requirements -- install with `pip3 install zincbase[web]`.
+You also need an accessible Redis instance somewhere. This one-liner will get it running
+locally: `docker run -p 6379:6379 -d redis` (requires Docker, of course.)
+
+You then need a Zincbase server instance running:
+
 ## Building documentation
 
 From docs/ dir: `make html`. If something changed a lot: `sphinx-apidoc -o . ..`
@@ -113,8 +121,6 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 * Refactor so edge is its own class
 * Query all edges by attribute
-* Rules (observables) to say 'on change of attribute, run this small program and propagate changes'
-* * Will enable advanced simulation beginning with Abelian sandpile
 * to_csv method
 * To DOT, for visualization (integrate with github/anvaka/word2vec-graph)
 * utilize postgres as backend triple store
