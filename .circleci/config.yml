@@ -6,7 +6,7 @@ jobs:
       - image: node:latest
     steps:
       - checkout
-      - build_dir: zincbase/web/frontend/
+      - working_directory: zincbase/web/frontend/
       - run:
           name: Install node deps
           command: |
