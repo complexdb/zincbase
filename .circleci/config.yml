@@ -12,6 +12,9 @@ jobs:
           command: |
             npm install
             npm run build
+      - store_artifacts:
+          path: /project/zincbase/web/frontend/bundle.js
+          destination: bundle.js
   test:
     docker:
       - image: python:3.7
