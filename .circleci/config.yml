@@ -24,6 +24,10 @@ jobs:
       - attach_workspace:
           at: /frontend
       - run:
+          name: dummy test
+          command: |
+            ls /frontend
+      - run:
           name: Install deps
           command: |
             python3 -m pip install --upgrade pip setuptools --ignore-installed
@@ -52,6 +56,8 @@ jobs:
       - image: python:3.7
     steps:
       - checkout
+      - attach_workspace:
+          at: /frontend
       - run:
           name: Preliminary installation
           command: |
