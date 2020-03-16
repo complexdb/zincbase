@@ -12,14 +12,17 @@ jobs:
           command: |
             npm install
             npm run build
-      - store_artifacts:
-          path: /root/project/zincbase/web/frontend/bundle.js
-          destination: bundle.js
+      - persist_to_workspace:
+          root: /root/project/zincbase/web/frontend/
+          paths:
+            - bundle.js
   test:
     docker:
       - image: python:3.7
     steps:
       - checkout
+      - attach_workspace:
+          at: /frontend
       - run:
           name: Install deps
           command: |
@@ -67,6 +70,8 @@ workflows:
       - build_node:
           name: build_node_first
       - test:
+          requires:
+            - build_node_first
           name: test_first
       - build:
           requires:
