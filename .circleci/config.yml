@@ -1,6 +1,17 @@
 version: 2.1
 
 jobs:
+  build_node:
+    docker:
+      - image: node:latest
+    steps:
+      - checkout
+      - build_dir: zincbase/web/frontend/
+      - run:
+          name: Install node deps
+          command: |
+            npm install
+            npm run build
   test:
     docker:
       - image: python:3.7
