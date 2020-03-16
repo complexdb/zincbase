@@ -61,6 +61,8 @@ workflows:
   version: 2.1
   build_and_test:
     jobs:
+      - build_node:
+          name: build_node_first
       - test:
           name: test_first
       - build:
