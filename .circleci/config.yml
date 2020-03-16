@@ -61,7 +61,6 @@ jobs:
       - run:
           name: Copy built frontend into package
           command: |
-            mkdir web/static
             cp /frontend/bundle.js web/static/bundle.js
       - run:
           name: Preliminary installation
@@ -71,17 +70,16 @@ jobs:
       - run:
           name: Build package
           command: python setup.py sdist bdist_wheel --universal
+      - run:
+          name: Upload to pypi
+          command: twine upload dist/* || true
 workflows:
   version: 2.1
   build_and_test:
     jobs:
       - build_node:
           name: build_node_first
-      - test:
-          requires:
-            - build_node_first
-          name: test_first
       - build:
           requires:
-            - test_first
+            - build_node_first
 
