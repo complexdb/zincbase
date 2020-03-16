@@ -79,7 +79,15 @@ workflows:
     jobs:
       - build_node:
           name: build_node_first
-      - build:
+      - test:
           requires:
             - build_node_first
+          name: test_first
+      - build:
+          requires:
+            - test_first
+          filters:
+            branches:
+              only:
+                - master
 
