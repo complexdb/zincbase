@@ -59,6 +59,11 @@ jobs:
       - attach_workspace:
           at: /frontend
       - run:
+          name: Copy built frontend into package
+          command: |
+            mkdir web/static
+            cp /frontend/bundle.js web/static/bundle.js
+      - run:
           name: Preliminary installation
           command: |
             python3 -m pip install -r requirements.txt
@@ -66,9 +71,6 @@ jobs:
       - run:
           name: Build package
           command: python setup.py sdist bdist_wheel --universal
-      - run:
-          name: Upload to pypi
-          command: twine upload dist/* || true
 workflows:
   version: 2.1
   build_and_test:
@@ -82,8 +84,4 @@ workflows:
       - build:
           requires:
             - test_first
-          filters:
-            branches:
-              only:
-                - master
 
