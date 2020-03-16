@@ -61,7 +61,7 @@ jobs:
       - run:
           name: Copy built frontend into package
           command: |
-            cp /frontend/bundle.js web/static/bundle.js
+            cp /frontend/bundle.js zincbase/web/static/bundle.js
       - run:
           name: Preliminary installation
           command: |
