@@ -122,7 +122,6 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 * Refactor so edge is its own class
 * Query all edges by attribute
 * to_csv method
-* To DOT, for visualization (integrate with github/anvaka/word2vec-graph)
 * utilize postgres as backend triple store
 * The to_csv/from_csv methods do not yet support node attributes.
 * Reinforcement learning for graph traversal.
