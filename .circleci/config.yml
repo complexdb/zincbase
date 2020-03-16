@@ -13,7 +13,7 @@ jobs:
             npm install
             npm run build
       - store_artifacts:
-          path: /project/zincbase/web/frontend/bundle.js
+          path: /root/project/zincbase/web/frontend/bundle.js
           destination: bundle.js
   test:
     docker:
