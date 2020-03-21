@@ -28,6 +28,7 @@ jobs:
           command: |
             python3 -m pip install --upgrade pip setuptools --ignore-installed
             python3 -m pip install -r requirements.txt
+            python3 -m pip install -r requirements-test.txt
       - run:
           name: Build and install package
           command: |
@@ -38,6 +39,7 @@ jobs:
           name: Run Tests
           command: |
             python3 -m doctest zincbase/zincbase.py
+            python3 -m pytest test/test_web.py
             python3 test/test_attr.py
             python3 test/test_main.py
             python3 test/test_lists.py

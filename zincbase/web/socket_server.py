@@ -13,7 +13,7 @@ def serve(args):
     print('Starting websocket server...')
     
     socketio = SocketIO(app, message_queue=f"redis://{args.redis}", cors_allowed_origins='*')
-
+    
     @socketio.on('message')
     def handle_message(message):
         pass
