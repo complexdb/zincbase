@@ -6,7 +6,7 @@ def serve(args):
     eventlet.monkey_patch()
     print('Starting websocket server...')
 
-    app = Flask(__name__, static_url_path='/zincbase/web/static')
+    app = Flask(__name__, static_folder='/zincbase/web/static')
     socketio = SocketIO(app, message_queue=f"redis://{args.redis}", cors_allowed_origins='*')
 
     @socketio.on('message')

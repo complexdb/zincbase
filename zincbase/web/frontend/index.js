@@ -6,10 +6,12 @@ if (!query.server) {
     server = query.server;
 }
 const ForceGraph3D = require('3d-force-graph');
+window.SpriteText = require('three-spritetext');
 const io = require('socket.io-client');
 let graph = undefined;
 let gData = { nodes: [], links: [] };
 const socket = io(server);
+let do_auto_refresh = false;
 
 socket.on('addNode', data => {
     gData.nodes.push(data);
@@ -26,6 +28,8 @@ socket.on('render', data => {
     let node_size = 10;
     let node_opacity = 0.9;
     let node_label = 'id';
+    let label_node = undefined;
+    let label_edge = undefined;
     let node_visibility = true;
     let edge_visibility = true;
     let edge_label = 'pred';
@@ -156,6 +160,60 @@ socket.on('render', data => {
                 edge_size = data.edge_size; // a value
             }
         }
+        if (data.label_node) {
+            let the_label = 'id';
+            if (typeof(node_label) === 'function') {
+                the_label = 'id'; // not supported, currently, to set
+                // this by a function.
+            } else {
+                the_label = node_label;
+            }
+            let fn = Function(`return node => {
+                const sprite = new SpriteText(node['${the_label}']);
+                sprite.color = '${data.label_node.color}';
+                sprite.textHeight = ${data.label_node.height};
+                sprite.position.z += ${data.label_node.offset};
+                return sprite;
+            }`);
+            try {
+                fn = fn();
+                if (!fn) {
+                    label_node = undefined;
+                } else {
+                    label_node = fn;
+                }
+            } catch {
+                label_node = undefined;
+            }
+            do_auto_refresh = true;
+        }
+        if (data.label_edge) {
+            let the_label = 'pred';
+            if (typeof(edge_label) === 'function') {
+                the_label = 'pred'; // not supported, currently, to set
+                // this by a function.
+            } else {
+                the_label = edge_label;
+            }
+            let fn = Function(`return edge => {
+                const sprite = new SpriteText(edge['${the_label}']);
+                sprite.color = '${data.label_edge.color}';
+                sprite.textHeight = ${data.label_edge.height};
+                sprite.position.z += ${data.label_edge.offset};
+                return sprite;
+            }`);
+            try {
+                fn = fn();
+                if (!fn) {
+                    label_edge = undefined;
+                } else {
+                    label_edge = fn;
+                }
+            } catch {
+                label_edge = undefined;
+            }
+            do_auto_refresh = true;
+        }
     }
     graph = ForceGraph3D()
             .forceEngine(engine)
@@ -164,6 +222,8 @@ socket.on('render', data => {
             .nodeColor(node_color)
             .nodeVal(node_size)
             .nodeLabel(node_label)
+            .nodeThreeObject(label_node)
+            .nodeThreeObjectExtend(true)
             .nodeVisibility(node_visibility)
             .linkVisibility(edge_visibility)
             .linkLabel(edge_label)
@@ -172,13 +232,27 @@ socket.on('render', data => {
             .linkDirectionalArrowLength(arrow_size)
             .linkDirectionalArrowColor(arrow_color)
             .linkDirectionalArrowRelPos(0.95)
+            .linkThreeObject(label_edge)
+            .linkThreeObjectExtend(true)
+            .linkPositionUpdate((sprite, { start, end }) => {
+                if (!sprite) return undefined;
+                const middlePos = Object.assign(...['x', 'y', 'z'].map(c => ({
+                  [c]: start[c] + (end[c] - start[c]) / 2
+                })));
+                Object.assign(sprite.position, middlePos);
+              })
             .backgroundColor(bg_color)
             (document.getElementById('container')).graphData(gData);
 });
 socket.on('updateNode', data => {
-    const node = gData.nodes[data.id];
+    let node = gData.nodes.filter(node => node.id == data.id);
+    if (!node || !node.length) return false;
+    node = node[0];
     Object.assign(node, data.attributes);
     graph.graphData(gData);
+    if (do_auto_refresh) {
+        graph.refresh();
+    }
 });
 socket.on('updateEdge', data => {
     let edge = gData.links.filter(edge =>
@@ -190,14 +264,22 @@ socket.on('updateEdge', data => {
     edge = edge[0];
     Object.assign(edge, data.attributes);
     graph.graphData(gData);
+    if (do_auto_refresh) {
+        graph.refresh();
+    }
 });
 
 socket.on('batchUpdateNode', data => {
     for (const update of data) {
-        const node = gData.nodes[update.id];
+        let node = gData.nodes.filter(node => node.id === update.id);
+        if (!node || !node.length) return false;
+        node = node[0];
         Object.assign(node, update.attributes);
     }
     graph.graphData(gData);
+    if (do_auto_refresh) {
+        graph.refresh();
+    }
 });
 socket.on('batchUpdateEdge', data => {
     for (const update of data) {
@@ -211,4 +293,7 @@ socket.on('batchUpdateEdge', data => {
         Object.assign(edge, update.attributes);
     }
     graph.graphData(gData);
+    if (do_auto_refresh) {
+        graph.refresh();
+    }
 });

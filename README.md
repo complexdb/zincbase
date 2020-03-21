@@ -39,24 +39,12 @@ for ans in kb.query('eats(tom, Food)'):
 # (lithuania, neighbor, poland)
 
 kb = KB()
-kb.from_csv('./assets/countries.csv')
+kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
 kb.build_kg_model(cuda=False, embedding_size=40)
-kb.train_kg_model(steps=2000, batch_size=1, verbose=False)
+kb.train_kg_model(steps=8000, batch_size=1, verbose=False)
 kb.estimate_triple_prob('fiji', 'locatedin', 'melanesia')
-0.8467
+0.9607
 ```
-
-## Complexity (Graph/Network) Examples
-
-Two such examples are included (right now; we intend to include more soon such
-as virus spread and neural nets that communicate.) The examples are
-basic ones: Conway's Game of Life and the Abelian Sandpile. Here are some
-screencaps; source code is [here](https://github.com/complexdb/zincbase/tree/master/examples),
-performance can be lightning fast depending how you tweak Zincbase recursion
-and propagation settings.
-
-![Peek 2020-03-06 23-53](https://user-images.githubusercontent.com/2245347/76139614-94c17c80-6006-11ea-8690-9059cd1a4672.gif)
-![Peek 2020-03-06 23-55](https://user-images.githubusercontent.com/2245347/76139591-4a400000-6006-11ea-96fc-ab3943834886.gif)
 
 # Requirements
 
@@ -69,6 +57,32 @@ and propagation settings.
 `pip install -r requirements.txt`
 
 _Note:_ Requirements might differ for PyTorch depending on your system.
+
+# Complexity (Graph/Network) Examples
+
+Two such examples are included (right now; we intend to include more soon such
+as virus spread and neural nets that communicate.) The examples are
+basic ones: Conway's Game of Life and the Abelian Sandpile. Here are some
+screencaps; source code is [here](https://github.com/complexdb/zincbase/tree/master/examples),
+performance can be lightning fast depending how you tweak Zincbase recursion
+and propagation settings.
+
+![Peek 2020-03-06 23-53](https://user-images.githubusercontent.com/2245347/76139614-94c17c80-6006-11ea-8690-9059cd1a4672.gif)
+![Peek 2020-03-06 23-55](https://user-images.githubusercontent.com/2245347/76139591-4a400000-6006-11ea-96fc-ab3943834886.gif)
+
+# Web UI
+
+Zincbase can serve live-updating graphs in 3D to a web browser. The command
+`python -m zincbase.web` will set up a static file server and a websocket
+server for live updates. Visit `http://localhost:5000/` in your browser
+and you'll see the graph UI. As you build a graph in Python, you can
+visualize it (and changes to it) in realtime through this UI.
+
+### Required for the UI
+
+* You should `pip install zincbase[web]` to get the optional web extra.
+* You should have Redis running; by default, at `localhost:6379`. This
+is easily achievable, just do `docker run -p 6379:6379 -d redis`
 
 # Testing
 

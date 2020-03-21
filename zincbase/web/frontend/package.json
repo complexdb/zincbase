@@ -10,6 +10,7 @@
       "query-string": "^6.11.1",
       "socket.io": "^2.3.0",
       "three": "^0.114.0",
+      "three-spritetext": "^1.2.3",
       "three.fly": "^0.1.6"
     },
     "devDependencies": {

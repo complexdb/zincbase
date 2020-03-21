@@ -72,6 +72,9 @@ class GraphCaster:
                node_label='id', node_visibility=True, edge_label='pred',
                edge_opacity=1, edge_color=0x333333, edge_size=0,
                edge_visibility=True, arrow_size=0, arrow_color=0x000001,
+               label_node=False, label_node_color='black', label_node_height=3,
+               label_node_offset=1, label_edge=False, label_edge_color='black',
+               label_edge_height=3, label_edge_offset=1,
                bg_color=0xffffff, engine='d3'):
         """Perform the initial setup/rendering of the current graph.
 
@@ -103,12 +106,25 @@ class GraphCaster:
         :param str engine: Specify d3 or ngraph. ngraph is faster but can be buggy, and
         is only really suitable for static graphs. The layouts can look different also.
         """
+        if label_node:
+            label_node = {
+                'color': 'black',
+                'height': 3,
+                'offset': node_size + label_node_offset
+            }
+        if label_edge:
+            label_edge = {
+                'color': 'black',
+                'height': 3,
+                'offset': edge_size + label_edge_offset
+            }
         attributes = { 'node_color': node_color, 'node_size': node_size,
                        'node_opacity': node_opacity, 'node_label': node_label,
                        'node_visibility': node_visibility, 'edge_visibility': edge_visibility,
                        'edge_opacity': edge_opacity, 'edge_color': edge_color,
                        'edge_size': edge_size, 'edge_label': edge_label,
                        'arrow_size': arrow_size, 'arrow_color': arrow_color,
+                       'label_node': label_node, 'label_edge': label_edge,
                        'engine': engine, 'bg_color': bg_color }
         self.socketio.emit('render', attributes, json=True)
 

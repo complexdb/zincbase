@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 
 import networkx as nx
 
@@ -57,6 +58,7 @@ class Node:
         """Returns attributes of the node stored in the KB
         """
         attributes = self._kb.G.nodes(data=True)[self._name]
+        attributes = copy.deepcopy(attributes)
         try:
             del attributes['_watches']
             del attributes['_new_neighbor_fn']
