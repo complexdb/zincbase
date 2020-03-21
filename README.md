@@ -58,6 +58,20 @@ kb.estimate_triple_prob('fiji', 'locatedin', 'melanesia')
 
 _Note:_ Requirements might differ for PyTorch depending on your system.
 
+# Web UI
+
+Zincbase can serve live-updating force-directed graphs in 3D to a web browser. The command
+`python -m zincbase.web` will set up a static file server and a websocket
+server for live updates. Visit `http://localhost:5000/` in your browser
+and you'll see the graph UI. As you build a graph in Python, you can
+visualize it (and changes to it) in realtime through this UI.
+
+Here are a couple of examples (source code [here](https://github.com/complexdb/zincbase/tree/master/examples/visualization)):
+
+![Peek 2020-03-21 12-34](https://user-images.githubusercontent.com/2245347/77235135-93e52a80-6b70-11ea-89ca-fe01f83708ff.gif)
+
+![Peek 2020-03-21 12-39](https://user-images.githubusercontent.com/2245347/77235199-0f46dc00-6b71-11ea-8380-6698283c98f6.gif)
+
 # Complexity (Graph/Network) Examples
 
 Two such examples are included (right now; we intend to include more soon such
@@ -69,14 +83,6 @@ and propagation settings.
 
 ![Peek 2020-03-06 23-53](https://user-images.githubusercontent.com/2245347/76139614-94c17c80-6006-11ea-8690-9059cd1a4672.gif)
 ![Peek 2020-03-06 23-55](https://user-images.githubusercontent.com/2245347/76139591-4a400000-6006-11ea-96fc-ab3943834886.gif)
-
-# Web UI
-
-Zincbase can serve live-updating graphs in 3D to a web browser. The command
-`python -m zincbase.web` will set up a static file server and a websocket
-server for live updates. Visit `http://localhost:5000/` in your browser
-and you'll see the graph UI. As you build a graph in Python, you can
-visualize it (and changes to it) in realtime through this UI.
 
 ### Required for the UI
 
