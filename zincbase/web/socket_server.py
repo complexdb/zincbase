@@ -1,5 +1,3 @@
-from urllib.parse import urljoin
-
 import eventlet
 from flask import Flask
 from flask_socketio import SocketIO, send
