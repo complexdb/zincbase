@@ -1,0 +1,4 @@
+eventlet
+flask-socketio
+pytest
+redis

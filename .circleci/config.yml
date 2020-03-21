@@ -27,8 +27,8 @@ jobs:
           name: Install deps
           command: |
             python3 -m pip install --upgrade pip setuptools --ignore-installed
-            python3 -m pip install pytest
             python3 -m pip install -r requirements.txt
+            python3 -m pip install -r requirements-test.txt
       - run:
           name: Build and install package
           command: |
