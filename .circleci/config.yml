@@ -1,11 +1,28 @@
 version: 2.1
 
 jobs:
+  build_node:
+    docker:
+      - image: node:latest
+    steps:
+      - checkout
+      - run:
+          name: Install node deps
+          working_directory: zincbase/web/frontend/
+          command: |
+            npm install
+            npm run build
+      - persist_to_workspace:
+          root: /root/project/zincbase/web/frontend/
+          paths:
+            - bundle.js
   test:
     docker:
       - image: python:3.7
     steps:
       - checkout
+      - attach_workspace:
+          at: /frontend
       - run:
           name: Install deps
           command: |
@@ -35,6 +52,12 @@ jobs:
       - image: python:3.7
     steps:
       - checkout
+      - attach_workspace:
+          at: /frontend
+      - run:
+          name: Copy built frontend into package
+          command: |
+            cp /frontend/bundle.js zincbase/web/static/bundle.js
       - run:
           name: Preliminary installation
           command: |
@@ -50,11 +73,15 @@ workflows:
   version: 2.1
   build_and_test:
     jobs:
+      - build_node:
+          name: build_node_first
       - test:
-          name: test_first
+          requires:
+            - build_node_first
+          name: test
       - build:
           requires:
-            - test_first
+            - test
           filters:
             branches:
               only:
