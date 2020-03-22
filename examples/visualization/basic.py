@@ -42,6 +42,7 @@ while True:
         pass
     else:
         from_node = str(from_node); to_node = str(to_node)
-        kb.edge_attr(from_node, 'edge', to_node, {'edge_attr': random.randint(0, 100)})
+        edge = kb.edge(from_node, 'edge', to_node)
+        edge.edge_attr = random.randint(0, 100)
         g.update_edge(from_node, 'edge', to_node, kb, defer=True)
     g.batch_update()

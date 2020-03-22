@@ -52,7 +52,7 @@ class GraphCaster:
         to send updates together and re-render only once.
         """
         attrs = { 'from': str(sub), 'to': str(ob), 'pred': pred }
-        attrs.update({ 'attributes': kb.edge(sub, pred, ob) })
+        attrs.update({ 'attributes': kb.edge(sub, pred, ob).attrs })
         if not defer:
             self.socketio.emit('updateEdge', attrs, json=True)
         else:
