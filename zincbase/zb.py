@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 
+from zincbase.graph.Edge import Edge
 from zincbase.graph.Node import Node
 from zincbase.logic.Goal import Goal
 from zincbase.logic.Negative import Negative
@@ -49,6 +50,7 @@ class KB():
         self._encoded_triples = []
         self._encoded_neg_examples = []
         self._node_cache = {}
+        self._edge_cache = {}
         self._kg_model = None
         self._knn = None
         self._knn_index = []
@@ -181,10 +183,12 @@ class KB():
         >>> kb.edge_attr('tom', 'eats', 'rice', {'used_to': 1.0})
         >>> kb.edge('tom', 'eats', 'rice')
         {'used_to': 1.0}"""
-        for _, edge in self.G[sub][ob].items():
-            if edge['pred'] == pred:
-                return {k:v for (k,v) in edge.items() if k != 'pred'}
-        return False
+        try:
+            edge = self._edge_cache[(sub, pred, ob)]
+        except:
+            edge = Edge(self, sub, pred, ob)
+            self._edge_cache[(sub, pred, ob)] = edge
+        return edge
 
     def attr(self, node_name, attributes):
         """Set attributes on an existing graph node.
@@ -999,7 +1003,7 @@ class KB():
                             is_neg = False
                         triples.append((subject, r.head.pred, object_,
                             self.node(subject).attrs,
-                            edge,
+                            edge.attrs,
                             self.node(object_).attrs,
                             is_neg
                         ))
