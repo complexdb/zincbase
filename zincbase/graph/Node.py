@@ -53,6 +53,9 @@ class Node:
     def __setitem__(self, key, value):
         return self.__setattr__(key, value)
     
+    def __delitem__(self, key):
+        del self._kb.G.nodes[self._name][key]
+    
     @property
     def attrs(self):
         """Returns attributes of the node stored in the KB
