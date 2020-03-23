@@ -10,15 +10,17 @@ kb.store('person(shamala)')
 kb.store('knows(tom, shamala)')
 assert kb.neighbors('tom') == [('shamala', [{'pred': 'knows'}])]
 
-kb.attr('tom', { 'grains': 0 })
+kb.node('tom')['grains'] = 0
 
 tom = kb.node('tom')
 assert tom.grains == 0
 assert tom.i_dont_exist is None
 assert tom['i_dont_exist'] is None
 
-kb.attr('shamala', { 'grains': 4 })
+kb.node('shamala').grains = 4
 shamala = kb.node('shamala')
+assert 'grains' in shamala
+assert 'grains' in shamala.attrs
 assert shamala.grains == 4
 shamala.grains += 1
 assert shamala.grains == 5
@@ -27,7 +29,7 @@ shamala['grains'] += 1
 assert shamala['grains'] == 6
 
 kb.store('person(jeraca)')
-kb.attr('jeraca', { 'grains': 3 })
+kb.node('jeraca').grains = 3
 
 zero_grains = list(kb.filter(lambda x: x['grains'] == 0))
 assert len(zero_grains) == 1
@@ -93,10 +95,16 @@ assert not fn_was_called
 kb.store('node(i_am_node)', node_attributes=[{'foo': 'bar'}])
 new_node = kb.node('i_am_node')
 assert new_node.foo == 'bar'
-kb.store('connected_nodes(3, 4)', node_attributes=[{'x': 3}, {'x': 4}])
+new_node.foo = 'baz'
+new_node = kb.node('i_am_node')
+assert new_node.foo == 'baz'
+kb.store('connected_nodes(3, 4)', node_attributes=[{'x': 3}, {'x': 4}], edge_attributes={'power_level': 3})
 _3 = kb.node(3)
 _4 = kb.node(4)
 assert _3.x == 3
 assert _4.x == 4
+assert kb.edge(3, 'connected_nodes', 4).power_level == 3
+kb.edge(3, 'connected_nodes', 4).power_level = 'high'
+assert kb.edge(3, 'connected_nodes', 4).power_level == 'high'
 
 print('All attribute tests passed.')

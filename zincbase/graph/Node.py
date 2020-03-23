@@ -23,6 +23,10 @@ class Node:
     
     def __ne__(self, comparator):
         return self._name != str(comparator)
+    
+    def __iter__(self):
+        for attr in self.attrs:
+            yield(attr)
 
     def __getattr__(self, key):
         try:

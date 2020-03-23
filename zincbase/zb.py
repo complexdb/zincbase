@@ -121,53 +121,6 @@ class KB():
         """
         self._PROPAGATION_LIMIT = propagations
 
-    def edge_attr(self, sub, pred, ob, attributes):
-        """Set attributes on a predicate between subject and object.
-        Useful for example to encode time, or truthiness.
-
-        Note that if any of the specified attributes have been previously set,
-        this updates them with new values. To delete a set edge attribute, see also `delete_edge_attr`.
-
-        :param str sub: Subject node/entity
-        :param str pred: Predicate between subject and object
-        :param str ob: Object node/entity
-        :param dict attributes: Attributes to set on the individual edge. Must be floats.
-
-        :Example:
-
-        >>> kb = KB()
-        >>> kb.store('eats(tom, rice)')
-        0
-        >>> kb.edge_attr('tom', 'eats', 'rice', {'used_to': 1.0})
-        >>> kb.edge('tom', 'eats', 'rice')
-        {'used_to': 1.0}
-        >>> kb.edge_attr('tom', 'eats', 'rice', {'still_does': 1.0})
-        >>> kb.edge('tom', 'eats', 'rice')
-        {'used_to': 1.0, 'still_does': 1.0}"""
-        for idx, edge in self.G[sub][ob].items():
-            if edge['pred'] == pred:
-                nx.set_edge_attributes(self.G, {(sub, ob, idx): attributes})
-                return None
-        return False
-
-    def delete_edge_attr(self, sub, pred, ob, attributes):
-        """Delete attributes previously set on a predicate between subject and object.
-        To set the attribute in the first place, see also `edge_attr`.
-
-        :param str sub: Subject node/entity
-        :param str pred: Predicate between subject and object
-        :param str ob: Object node/entity
-        :param list attributes: List of attributes to delete.
-
-        :returns: False if attribute was not present, else None.
-        """
-        for idx, edge in self.G[sub][ob].items():
-            if edge['pred'] == pred:
-                for attribute in attributes:
-                    del edge[attribute]
-                return None
-        return False
-
     def edge(self, sub, pred, ob):
         """Returns an edge and its attributes.
 
@@ -180,32 +133,18 @@ class KB():
         >>> kb = KB()
         >>> kb.store('eats(tom, rice)')
         0
-        >>> kb.edge_attr('tom', 'eats', 'rice', {'used_to': 1.0})
         >>> kb.edge('tom', 'eats', 'rice')
-        {'used_to': 1.0}"""
+        tom___eats___rice
+        >>> kb.edge('tom', 'eats', 'rice').alot = 1
+        >>> kb.edge('tom', 'eats', 'rice').alot
+        1
+        """
         try:
             edge = self._edge_cache[(sub, pred, ob)]
         except:
             edge = Edge(self, sub, pred, ob)
             self._edge_cache[(sub, pred, ob)] = edge
         return edge
-
-    def attr(self, node_name, attributes):
-        """Set attributes on an existing graph node.
-
-        :param str node_name: Name of the node
-        :param dict attributes: Dictionary of attributes to set
-
-        :Example:
-
-        >>> kb = KB()
-        >>> kb.store('eats(tom, rice)')
-        0
-        >>> kb.attr('tom', {'is_person': True})
-        >>> kb.node('tom').attrs
-        {'is_person': True}"""
-
-        nx.set_node_attributes(self.G, {node_name: attributes})
     
     @contextmanager
     def dont_propagate(self):
@@ -228,7 +167,7 @@ class KB():
         tom
         >>> kb.node('tom').attrs
         {}
-        >>> kb.attr('tom', {'is_person': True})
+        >>> kb.node('tom').is_person = True
         >>> kb.node('tom').attrs
         {'is_person': True}"""
         node_name = str(node_name)
@@ -280,7 +219,7 @@ class KB():
         >>> kb = KB()
         >>> kb.store('person(tom)')
         0
-        >>> kb.attr('tom', {'cats': 0})
+        >>> kb.node('tom').cats = 0
         >>> list(kb.filter(lambda x: x['cats'] < 1))
         [tom]"""
         if candidate_nodes is None:
@@ -909,7 +848,9 @@ class KB():
         >>> kb.store('a(a)')
         0
         >>> kb.store('node(x)', node_attributes=[{'node_number': 1}])
-        1"""
+        1
+        >>> list(kb.query('node(What)'))
+        [{'What': 'x'}]"""
         statement = strip_all_whitespace(statement)
         if 'truthiness' in edge_attributes and edge_attributes['truthiness'] < 0:
             if statement[0] != '~':
@@ -927,12 +868,15 @@ class KB():
         self.rules.append(Rule(statement, kb=self))
         if edge_attributes:
             parts = split_to_parts(statement)
-            self.edge_attr(parts[0], parts[1], parts[2], edge_attributes)
+            if parts[2] is not None:
+                for idx, edge in self.G[parts[0]][parts[2]].items():
+                    if edge['pred'] == parts[1]:
+                        nx.set_edge_attributes(self.G, {(parts[0], parts[2], idx): edge_attributes})
         if node_attributes:
             parts = split_to_parts(statement)
-            self.attr(parts[0], node_attributes[0])
+            nx.set_node_attributes(self.G, {parts[0]: node_attributes[0]})
             if parts[2] is not None:
-                self.attr(parts[2], node_attributes[1])
+                nx.set_node_attributes(self.G, {parts[2]: node_attributes[1]})
         return len(self.rules) - 1
 
     def to_tensorboard_projector(self, embeddings_filename, labels_filename, filter_fn=None):
@@ -980,7 +924,7 @@ class KB():
         1
         >>> kb.to_triples()
         [('b', 'a', 'c')]
-        >>> kb.attr('b', {'an_attribute': 'xyz'})
+        >>> kb.node('b').an_attribute = 'xyz'
         >>> kb.to_triples()
         [('b', 'a', 'c')]
         >>> kb.to_triples(data=True)

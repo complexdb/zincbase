@@ -1,14 +1,17 @@
-"""This file simulates the famous Conway's Game of Life cellular automata.
-There's no pressing need to do this using Zincbase -- it's just a demo.
+"""This example shows a simple graph with updating attributes.
+Usage: run `python -m zincbase.web` & `python basic.py`
+Open your web browser to localhost:5000
 """
 
 import random
 import time
 
+import torch
+
 from zincbase import KB
 from zincbase.web import GraphCaster
 
-kb = KB()
+kb = KB() 
 g = GraphCaster()
 g.reset()
 
@@ -44,5 +47,5 @@ while True:
         from_node = str(from_node); to_node = str(to_node)
         edge = kb.edge(from_node, 'edge', to_node)
         edge.edge_attr = random.randint(0, 100)
-        g.update_edge(from_node, 'edge', to_node, kb, defer=True)
+        g.update_edge(edge, defer=True)
     g.batch_update()

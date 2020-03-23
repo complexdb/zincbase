@@ -8,12 +8,13 @@ class Edge:
     """
     def __init__(self, kb, sub, pred, ob, data={}, watches=[]):
         super().__setattr__('_kb', kb)
-        super().__setattr__('_name', sub + '___' + pred + '___' + ob)
-        super().__setattr__('_sub', sub)
-        super().__setattr__('_pred', pred)
-        super().__setattr__('_ob', ob)
+        super().__setattr__('_name', str(sub) + '___' + str(pred) + '___' + str(ob))
+        super().__setattr__('_sub', str(sub))
+        super().__setattr__('_pred', str(pred))
+        super().__setattr__('_ob', str(ob))
         super().__setattr__('_recursion_depth', 0)
         super().__setattr__('_watches', defaultdict(list))
+        super().__setattr__('_edge', self._kb.G[self._sub][self._ob])
         for watch in watches:
             self._watches[watch[0]].append(watch[1])
     
@@ -26,9 +27,13 @@ class Edge:
     def __ne__(self, comparator):
         return self._name != str(comparator)
 
+    def __iter__(self):
+        for attr in self.attrs:
+            yield(attr)
+
     def __getattr__(self, key):
         try:
-            for _, edge in self._kb.G[self._sub][self._ob].items():
+            for _, edge in self._edge.items():
                 if edge['pred'] == self._pred:
                     return edge[key]
         except KeyError as e:
@@ -41,7 +46,7 @@ class Edge:
             return False
         self._kb._global_propagations += 1
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
-        for _, attrs in self._kb.G[self._sub][self._ob].items():
+        for _, attrs in self._edge.items():
             if attrs['pred'] == self._pred:
                 prev_val = attrs.get(key, None)
                 attrs.update({key: value})
@@ -58,7 +63,7 @@ class Edge:
         return self.__setattr__(key, value)
     
     def __delitem__(self, attr):
-        for _, attrs in self._kb.G[self._sub][self._ob].items():
+        for _, attrs in self._edge.items():
             if attrs['pred'] == self._pred:
                 del attrs[attr]
     
@@ -69,11 +74,17 @@ class Edge:
             return default
 
     @property
+    def nodes(self):
+        """Return the nodes that this edge is connected to as tuple of (subject, object)
+        """
+        return [self._kb.node(self._sub), self._kb.node(self._ob)]
+
+    @property
     def attrs(self):
         """Returns attributes of the edge stored in the KB
         """
         attributes = None
-        for _, edge in self._kb.G[self._sub][self._ob].items():
+        for _, edge in self._edge.items():
             if edge['pred'] == self._pred:
                 attributes = copy.deepcopy(edge)
         if attributes is None:

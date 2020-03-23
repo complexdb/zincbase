@@ -1,5 +1,9 @@
-"""This file simulates the famous Conway's Game of Life cellular automata.
+"""This file simulates the famous Conway's Game of Life cellular automata
+just as in the basic example, but this does 3D WebGL.
 There's no pressing need to do this using Zincbase -- it's just a demo.
+Usage: run `python -m zincbase.web` & `python gol.py`
+Open your web browser to localhost:5000
+
 """
 
 import random
