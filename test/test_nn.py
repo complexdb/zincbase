@@ -36,19 +36,15 @@ kb.store('based_in(microsoft, seattle)'); kb.store('based_in(facebook, bay_area)
 # # # # # # # # # # # # # # # # # # # # # # # #
 # Test using node attributes in NN
 # # # # # # # # # # # # # # # # # # # # # # # #
-kb.attr('tom', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('todd', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('oleg', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('john', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('akshay', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('vedant', {'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.attr('other1', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.attr('other2', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.attr('other3', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.attr('other4', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.attr('other5', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.attr('other6', {'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-
+for node in ['tom', 'todd', 'oleg', 'john', 'akshay', 'vedant']:
+    node = kb.node(node)
+    node['owns_a_raincoat'] = 0.0
+    node['doesnt_own_raincoat'] = 1.0
+for node in ['other1', 'other2', 'other3', 'other4', 'other5', 'other6']:
+    node = kb.node(node)
+    node['owns_a_raincoat'] = 1.0
+    node['doesnt_own_raincoat'] = 0.0
+    
 kb.build_kg_model(cuda=False, embedding_size=30, node_attributes=['owns_a_raincoat', 'doesnt_own_raincoat'],
                attr_loss_to_graph_loss=0.9)
 # Ideally use bs=1 to overfit on this small dataset
@@ -103,7 +99,7 @@ print('First suite of neural network tests passed.')
 # # # # # # # # # # # # # # # # # # # # # # # #
 kb.store('lives_in(tom, seattle)') ## TODO seems weird to have to add this fact then stick 'formerly' on it
 # on the next line.
-kb.edge_attr('tom', 'lives_in', 'seattle', {'formerly': 1.0})
+kb.edge('tom', 'lives_in', 'seattle')['formerly'] = 1.0
 kb.seed(555)
 kb.build_kg_model(cuda=False, embedding_size=50, node_attributes=['owns_a_raincoat', 'doesnt_own_raincoat'],
                 pred_attributes=['formerly'], attr_loss_to_graph_loss=0.9, pred_loss_to_graph_loss=5.0)

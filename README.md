@@ -139,7 +139,6 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 # TODO
 
-* Refactor so edge is its own class
 * Query all edges by attribute
 * to_csv method
 * utilize postgres as backend triple store

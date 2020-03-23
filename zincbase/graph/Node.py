@@ -23,6 +23,10 @@ class Node:
     
     def __ne__(self, comparator):
         return self._name != str(comparator)
+    
+    def __iter__(self):
+        for attr in self.attrs:
+            yield(attr)
 
     def __getattr__(self, key):
         try:
@@ -52,6 +56,9 @@ class Node:
     
     def __setitem__(self, key, value):
         return self.__setattr__(key, value)
+    
+    def __delitem__(self, key):
+        del self._kb.G.nodes[self._name][key]
     
     @property
     def attrs(self):

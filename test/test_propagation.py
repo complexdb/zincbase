@@ -104,5 +104,28 @@ assert kb.node('node1').value == 2
 kb.node('node2').value == 2
 kb.node('node3').value == 1
 
+kb = KB()
+kb.store('is_linked(a,b)', edge_attributes={'zig': 1})
+edge = kb.edge('a', 'is_linked', 'b')
+node_a = kb.node('a')
+node_b = kb.node('b')
+node_a.node_zig = 1
+node_b.node_zig = 2
+assert edge.zig == 1
+was_called = False
+def nights_watch(edge, prev_val):
+    global was_called
+    assert prev_val == 1
+    assert edge.nodes[0] == 'a'
+    assert edge.nodes[1] == 'b'
+    for node in edge.nodes:
+        node.node_zig += 1
+    was_called = True
+edge.watch('zig', nights_watch)
+edge.zig += 1
+assert edge.zig == 2
+assert node_a.node_zig == 2
+assert node_b.node_zig == 3
+assert was_called
 
 print('All propagation tests passed.')
