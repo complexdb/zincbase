@@ -36,19 +36,15 @@ kb.store('based_in(microsoft, seattle)'); kb.store('based_in(facebook, bay_area)
 # # # # # # # # # # # # # # # # # # # # # # # #
 # Test using node attributes in NN
 # # # # # # # # # # # # # # # # # # # # # # # #
-kb.node('tom').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('todd').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('oleg').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('john').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('akshay').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('vedant').attrs.update({'owns_a_raincoat': 0.0, 'doesnt_own_raincoat': 1.0})
-kb.node('other1').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.node('other2').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.node('other3').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.node('other4').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.node('other5').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-kb.node('other6').attrs.update({'owns_a_raincoat': 1.0, 'doesnt_own_raincoat': 0.0})
-
+for node in ['tom', 'todd', 'oleg', 'john', 'akshay', 'vedant']:
+    node = kb.node(node)
+    node['owns_a_raincoat'] = 0.0
+    node['doesnt_own_raincoat'] = 1.0
+for node in ['other1', 'other2', 'other3', 'other4', 'other5', 'other6']:
+    node = kb.node(node)
+    node['owns_a_raincoat'] = 1.0
+    node['doesnt_own_raincoat'] = 0.0
+    
 kb.build_kg_model(cuda=False, embedding_size=30, node_attributes=['owns_a_raincoat', 'doesnt_own_raincoat'],
                attr_loss_to_graph_loss=0.9)
 # Ideally use bs=1 to overfit on this small dataset
