@@ -139,10 +139,8 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 # TODO
 
-* Query all edges by attribute
-* to_csv method
+* Query all edges by attribute (or connected node)
 * utilize postgres as backend triple store
-* The to_csv/from_csv methods do not yet support node attributes.
 * Reinforcement learning for graph traversal.
 
 # References & Acknowledgements

@@ -2,6 +2,7 @@ from collections import deque, defaultdict
 from contextlib import contextmanager
 import copy
 import csv
+import json
 import math
 import os
 import pickle
@@ -969,7 +970,46 @@ class KB():
         for (u, p, v) in triples:
             self.store('{}({},{})'.format(p, u, v))
 
+    def to_csv(self, csvfile, delimiter=','):
+        """Saves a knowledge base to a CSV file.
+
+        :param str csvfile: Filename to write. File will be a number of rows separated
+        by delimiter, in the 6-column format `subject,predicate,object,subject_attributes
+        ,object_attributes,edge_attributes`.
+        :param str delimiter: Default is `','`; try `'\t'` for tab delimited.
+        """
+        with open(csvfile, 'w') as f:
+            f = csv.writer(f)
+            for rule in self.rules:
+                rule = split_to_parts(str(rule.head))
+                _sub = self.node(rule[0])
+                _ob = self.node(rule[2])
+                _sub_attrs = json.dumps(_sub.attrs)
+                _ob_attrs = json.dumps(_ob.attrs)
+                _edge_attrs = json.dumps(self.edge(str(_sub), rule[1], str(_ob)).attrs)
+                f.writerow([_sub, rule[1], _ob, _sub_attrs, _ob_attrs, _edge_attrs])
+
+
     def from_csv(self, csvfile, header=None, start=0, size=None, delimiter=','):
+        """Reads a knowledge base into memory from a CSV file.
+
+        :param str csvfile: Filename to read. File is a number of rows separated
+        by delimiter, in the basic format `subject,predicate,object`. Optionally,
+        the row may have 3 more columns: `subject_attributes`, `object_attributes`
+        and `edge_attributes`.
+        :param bool header: Whether to ignore (True) a header row
+        :param int start: Aside from the header row, number of subsequent rows to ignore
+        :param int size: How many rows after which to stop reading, or None if never.
+        :param str delimiter: Default is `','`; try `'\t'` for tab delimited.
+
+        :Example:
+        
+        >>> kb = KB()
+        >>> kb.from_csv('./assets/countries_s1_train.csv', delimiter='\\t')
+        >>> list(kb.query('locatedin(fiji, Where)'))
+        [{'Where': 'melanesia'}, {'Where': 'oceania'}]
+
+        """
         with open(csvfile) as f:
             reader = csv.reader(f, delimiter=delimiter)
             i = 0
@@ -986,13 +1026,12 @@ class KB():
                 ob = cleanse(row[2])
                 if not (sub.replace('_','').isalnum() and ob.replace('_','').isalnum()):
                     continue
-                node_attributes = [
-                    {'_': {'real_name': row[0]}},
-                    {'_': {'real_name': row[2]}}
-                ]
-                edge_attributes = {
-                    '_': {'real_name': row[1]}
-                }
+                if len(row) > 3:
+                    node_attributes = [json.loads(row[3]), json.loads(row[4])]
+                    edge_attributes = json.loads(row[5])
+                else:
+                    node_attributes = []
+                    edge_attributes = {}
                 self.store('{}({},{})'.format(pred, sub, ob), node_attributes=node_attributes, edge_attributes=edge_attributes)
                 i += 1
                 if size and i > size:
