@@ -117,10 +117,44 @@ class KB():
         effects)
 
         :Example:
+        
         >>> kb = KB()
         >>> kb.set_propagation_limit(1)
         """
         self._PROPAGATION_LIMIT = propagations
+
+    def nodes(self, filter_fn=None):
+        """Returns the nodes in the current KB, optionally filtered by filter_fn.
+        
+        :param filter_fn: Function which is passed each of the nodes; only
+        nodes for which it returns True will be returned.
+        
+        :Example:
+
+        >>> kb = KB()
+        >>> kb.store('node_friends(chris, jonny)')
+        0
+        >>> list(kb.nodes())
+        [chris, jonny]
+        >>> chris_node = list(kb.nodes(lambda x: x == 'chris'))
+        >>> len(chris_node)
+        1
+        >>> chris_node[0] == 'chris'
+        True
+        >>> kb.node('jonny').passenger_age = 14
+        >>> jonny_node = list(kb.nodes(lambda x: x.passenger_age == 14))
+        >>> jonny_node[0] == 'jonny'
+        True
+        
+        """
+        nodes = self.G.nodes(data=True)
+        for node_name, node_attrs in nodes:
+            node = self.node(node_name)
+            if filter_fn:
+                if filter_fn(node):
+                    yield node
+            else:
+                yield node
 
     def edge(self, sub, pred, ob):
         """Returns an edge and its attributes.
@@ -146,6 +180,31 @@ class KB():
             edge = Edge(self, sub, pred, ob)
             self._edge_cache[(sub, pred, ob)] = edge
         return edge
+    
+    def edges(self, filter_fn=None):
+        """Returns edges in the KB, optionally filtered by filter_fn.
+
+        :Example:
+
+        >>> kb = KB()
+        >>> kb.store('eats(tom, rice)')
+        0
+        >>> list(kb.edges())
+        [tom___eats___rice]
+        >>> list(kb.edges(lambda x: x.nodes[0] == 'tom'))
+        [tom___eats___rice]
+        >>> kb.edge('tom', 'eats', 'rice').alot = 'every_day_almost'
+        >>> list(kb.edges(lambda x: x.alot == 'every_day_almost'))
+        [tom___eats___rice]
+        """
+        edges = self.G.edges(data=True)
+        for edge in edges:
+            edge = self.edge(edge[0], edge[-1]['pred'], edge[1])
+            if filter_fn:
+                if filter_fn(edge):
+                    yield edge
+            else:
+                yield edge
     
     @contextmanager
     def dont_propagate(self):
