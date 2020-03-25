@@ -139,9 +139,10 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 # TODO
 
-* Query all edges by attribute (or connected node)
+* add ability to `kb = KB(backend='complexdb://my_api_key')`
 * utilize postgres as backend triple store
 * Reinforcement learning for graph traversal.
+* Rete algorithm (maybe)
 
 # References & Acknowledgements
 
