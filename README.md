@@ -139,11 +139,10 @@ NOTE: This is now all automatic via CircleCI, but here are the manual steps for 
 
 # TODO
 
-* Query all edges by attribute
-* to_csv method
+* add ability to `kb = KB(backend='complexdb://my_api_key')`
 * utilize postgres as backend triple store
-* The to_csv/from_csv methods do not yet support node attributes.
 * Reinforcement learning for graph traversal.
+* Rete algorithm (maybe)
 
 # References & Acknowledgements
 

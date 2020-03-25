@@ -107,4 +107,28 @@ assert kb.edge(3, 'connected_nodes', 4).power_level == 3
 kb.edge(3, 'connected_nodes', 4).power_level = 'high'
 assert kb.edge(3, 'connected_nodes', 4).power_level == 'high'
 
+kb = KB()
+kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
+kb.node('mali').zig = 123
+called = False
+for node in kb.nodes():
+    if node == 'mali':
+        called = True
+        assert called == True
+        assert node.attrs['zig'] == 123
+assert called
+mali = list(kb.nodes(lambda x: x == 'mali'))
+assert len(mali) == 1
+assert mali[0].zig == 123
+assert 'zig' in mali[0]
+assert '_watches' not in mali[0]
+
+edges = list(kb.edges())
+assert len(edges) == 1111
+edges = list(kb.edges(lambda x: x.nodes[0] == 'mali'))
+assert len(edges) == 8
+kb.store('itisin(mali, western_africa)', edge_attributes={'def_want_visit': True})
+edges = list(kb.edges(lambda x: x.pred == 'itisin' and x.nodes[0] == 'mali'))
+assert edges[0]['def_want_visit'] == True
+
 print('All attribute tests passed.')
