@@ -33,16 +33,17 @@ class Term:
         if kb is not None:
             for i, arg in enumerate(self.args):
                 if arg:
+                    str_arg = str(arg)
                     added_node_1 = False
-                    if not kb.G.has_node(str(arg)):
-                        kb.G.add_node(str(arg))
+                    if not kb.G.has_node(str_arg):
+                        kb.G.add_node(str_arg)
                         added_node_1 = True
                     for arg2 in self.args[i+1:]:
                         added_node_2 = False
                         if not kb.G.has_node(str(arg2)):
                             kb.G.add_node(str(arg2))
                             added_node_2 = True
-                        kb.G.add_edge(str(arg), str(arg2), pred=self.pred)
+                        kb.G.add_edge(str_arg, str(arg2), pred=self.pred)
                         if added_node_1:
                             node = kb.node(str(arg2))
                             try:
@@ -51,7 +52,7 @@ class Term:
                             except Exception as e:
                                 pass
                         if added_node_2:
-                            node = kb.node(str(arg))
+                            node = kb.node(str_arg)
                             try:
                                 if not kb._dont_propagate:
                                     node._new_neighbor_fn(str(arg2))

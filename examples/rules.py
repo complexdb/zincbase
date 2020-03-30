@@ -4,10 +4,11 @@ kb = KB()
 
 kb.store('sku(tshirt)', node_attributes=[{'inventory': 10}])
 kb.store('sku(jeans)', node_attributes=[{'inventory': 1}])
+kb.store('top(tshirt)')
+#kb.store('outfit(tshirt, jeans)', edge_attributes={'inventory': min(kb.node('tshirt').inventory, kb.node('jeans').inventory)})
 
-kb.store('outfit(tshirt, jeans)', edge_attributes={'inventory': min(kb.node('tshirt').inventory, kb.node('jeans').inventory)})
-
-kb.store('outfit(tshirt, jeans, hat)')
+kb.store('outfit(X,Y) :- sku(X), sku(Y), top(X)')
+print('boop', list(kb.query('outfit(X,Y)')))
 
 import ipdb; ipdb.set_trace()
 

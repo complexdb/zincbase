@@ -80,6 +80,29 @@ class Node:
         """
         return self._kb.neighbors(self._name)
     
+    @property
+    def type(self):
+        """Returns the type(s) of the node
+
+        :Example:
+
+        >>> kb.store('tv_show(simpsons)')
+        >>> kb.node('simpsons').type
+        [tv_show]
+        """
+        TODO cache this once computed the first time !!!
+        for rule in self._kb.rules:
+            if len(rule.head.args) == 1 and rule.head.args[0]) == self._name:
+                yield rule.head.pred
+        I AM HERE - kb.node(tshirt).type should yield [top, sku]
+        THEN, when one of its properties changes, we can also go through
+        kb.rules[...].args and if any of them are this node's type,
+        then if the attribute changes, then notify that rule (e.g., outfit)
+        that it needs to recompute. and then the outfit rule (maybe needs
+        its own type!!! same as node and edge :( -- can update and trigger
+        based on the new attributes)
+
+    
     def watch(self, attribute, fn):
         """Execute user-defined function when the value of attribute changes.
         Function takes two args: `node` which has access to all
