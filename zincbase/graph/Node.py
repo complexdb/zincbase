@@ -48,6 +48,8 @@ class Node:
         if not self._kb._dont_propagate:
             for watch_fn in self._watches.get(key, []):
                 watch_fn(self, prev_val)
+            for rule in self.rules:
+                rule.on_change(self, { key: prev_val })
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
         self._kb._global_propagations -= 1
 
@@ -90,17 +92,31 @@ class Node:
         >>> kb.node('simpsons').type
         [tv_show]
         """
-        TODO cache this once computed the first time !!!
+        # TODO cache this once computed the first time, although,
+        # beware when a new rule is added afterwards (invalidate)
         for rule in self._kb.rules:
-            if len(rule.head.args) == 1 and rule.head.args[0]) == self._name:
+            if len(rule.head.args) == 1 and rule.head.args[0].pred == self._name:
                 yield rule.head.pred
-        I AM HERE - kb.node(tshirt).type should yield [top, sku]
-        THEN, when one of its properties changes, we can also go through
-        kb.rules[...].args and if any of them are this node's type,
-        then if the attribute changes, then notify that rule (e.g., outfit)
-        that it needs to recompute. and then the outfit rule (maybe needs
-        its own type!!! same as node and edge :( -- can update and trigger
-        based on the new attributes)
+        # THEN, when one of its properties changes, we can also go through
+        # kb.rules[...].args and if any of them are this node's type,
+        # then if the attribute changes, then notify that rule (e.g., outfit)
+        # that it needs to recompute. and then the outfit rule can update and trigger
+        # based on the new attributes
+    
+    @property
+    def rules(self):
+        """Yield the rules that are impacted by this node."""
+        already = []
+        for rule in self._kb.rules:
+            if not rule.goals:
+                continue
+            for goal in rule.goals:
+                if rule.head.pred in already:
+                    continue
+                already.append(str(rule.head.pred))
+                for _type in self.type:
+                    if _type in goal.pred:
+                        yield rule
 
     
     def watch(self, attribute, fn):
