@@ -11,9 +11,10 @@ class Node:
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
         nx.set_node_attributes(self._kb.G, {self._name: data})
-        self._watches = defaultdict(list)
-        for watch in watches:
-            self._watches[watch[0]].append(watch[1])
+        with self._kb.dont_propagate():
+            self._watches = defaultdict(list)
+            for watch in watches:
+                self._watches[watch[0]].append(watch[1])
     
     def __repr__(self):
         return self._name
@@ -49,7 +50,7 @@ class Node:
             for watch_fn in self._watches.get(key, []):
                 watch_fn(self, prev_val)
             for rule in self.rules:
-                rule.on_change(self, { key: prev_val })
+                rule.execute_change(self, key, value, prev_val)
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
         self._kb._global_propagations -= 1
 
@@ -146,7 +147,8 @@ class Node:
         grains changed to 4
 
         """
-        self._watches[attribute].append(fn)
+        with self._kb.dont_propagate():
+            self._watches[attribute].append(fn)
         return (attribute, len(self._watches) - 1)
     
     def remove_watch(self, attribute_or_watch_id):
