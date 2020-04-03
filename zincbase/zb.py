@@ -939,6 +939,10 @@ class KB():
             return '~' + str(len(self._neg_examples) - 1)
         self.rules.append(Rule(statement, kb=self))
         if edge_attributes:
+            if ':-' in statement:
+                raise Exception("""Cannot set edge attributes on a rule, which is unstable. \
+                Try creating the rule first, then setting the attribute.
+                """)
             parts = split_to_parts(statement)
             if parts[2] is not None:
                 for idx, edge in self.G[parts[0]][parts[2]].items():

@@ -31,9 +31,12 @@ class Node:
 
     def __getattr__(self, key):
         try:
+            if key == '__setstate__':
+                raise AttributeError
+            # TODO this is a bit of a hack
             return self._kb.G.nodes(data=True)[self._name][key]
         except KeyError as e:
-            return None
+            raise AttributeError
 
     def __setattr__(self, key, value):
         if self._kb._global_propagations > self._kb._PROPAGATION_LIMIT:

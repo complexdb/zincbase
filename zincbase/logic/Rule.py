@@ -5,7 +5,6 @@ from zincbase.logic.Term import Term
 class Rule:
     
     def __init__(self, expr, on_change=None, kb=None):
-        print('making new rule')
         parts = split_on(expr, ':-')
         self.head = Term(parts[0], kb=kb)
         self.goals = []
@@ -28,20 +27,15 @@ class Rule:
         :param new_value: The new value of the changed attribute
         :param prev_val: The previous value of the changed attribute
         """
-        print('executing a change!')
         if not self.on_change:
             return False
-        self.on_change(self.affected_nodes, changed_node, attribute, new_value, prev_val)
-
-        # next if self.head.kb is not none, we can do 
-        # self.head.kb.query ... maybe
-        # how to get from here to triggering "stock low" alert
-        # when one of our inventory node attributes changes??
-        # probably not too hard.
+        self.on_change(self, self.affected_nodes, changed_node, attribute, new_value, prev_val)
     
     @property
     def affected_nodes(self):
-        print('QUERYING ON!!!', str(self))
-        #import ipdb; ipdb.set_trace()
-        bindings = self._kb.query(str(self))
+        bindings = list(self._kb.query(str(self)))
+        if not bindings:
+            return []
+        else:
+            return [self._kb.node(x) for x in bindings[0].values()]
         return bindings

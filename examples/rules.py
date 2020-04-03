@@ -3,25 +3,34 @@ from zincbase import KB
 kb = KB()
 
 kb.store('sku(tshirt)', node_attributes=[{'inventory': 10}])
-kb.store('sku(jeans)', node_attributes=[{'inventory': 1}])
+kb.store('sku(jeans)', node_attributes=[{'inventory': 3}])
 kb.store('top(tshirt)')
-#kb.store('outfit(tshirt, jeans)', edge_attributes={'inventory': min(kb.node('tshirt').inventory, kb.node('jeans').inventory)})
+kb.store('bottom(jeans)')
 
-kb.store('outfit(X,Y) :- sku(X), sku(Y), top(X)')
-#print('boop', list(kb.query('outfit(X,Y)')))
-def mee(other_affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
-    print(node_that_changed, attr_changed)
-    affected_nodes = list(other_affected_nodes)
-    print("foo!", affected_nodes, node_that_changed, attr_changed, cur_val, prev_val)
-kb.rule(3).on_change = mee
-kb.node('tshirt').zig = 1
-#import ipdb; ipdb.set_trace()
-#import ipdb; ipdb.set_trace()
-# NEXT must get affected nodes to work. That way, when the outfit.on_change is called,
-# we can see not only that tshirt stock dropped too low and we must call tshirt's watch
-# in order to order more --- but we can also check on the stock for other affected
-# nodes (e.g. if X=tshirt, other affected nodes would be jeans) and maybe order the same
-# amount of extra jeans as we're about to order of tshirts.
+rule_num = kb.store('outfit(X, Y) :- sku(X), sku(Y), top(X), bottom(Y)')
+kb.rule(rule_num).inventory = min(kb.node('tshirt').inventory, kb.node('jeans').inventory)
+print('starting with inventory', kb.rule(rule_num).inventory)
+
+def inventory_changed(me, affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
+    me.inventory = min([n.inventory for n in affected_nodes])
+    if me.inventory < 1:
+        print('ordering a single more of', node_that_changed, node_that_changed.inventory)
+        node_that_changed.inventory += 1
+        print('after we ordered 1 more of :', node_that_changed, node_that_changed.inventory)
+    else:
+        print('no need to order more!')
+
+kb.rule(rule_num).on_change = inventory_changed
+kb.node('jeans').inventory -= 1
+print('our inventory of outfits is', kb.rule(rule_num).inventory)
+kb.node('jeans').inventory -= 1
+print('our inventory of outfits is', kb.rule(rule_num).inventory)
+kb.node('jeans').inventory -= 1
+print('our inventory of outfits is', kb.rule(rule_num).inventory)
+
+kb.rule(rule_num).inventory -= 1
+
+import sys; sys.exit(0)
 
 def low_stock_sku(sku, prev_val):
     if sku.inventory > prev_val:
