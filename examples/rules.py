@@ -28,7 +28,14 @@ print('our inventory of outfits is', kb.rule(rule_num).inventory)
 kb.node('jeans').inventory -= 1
 print('our inventory of outfits is', kb.rule(rule_num).inventory)
 
-kb.rule(rule_num).inventory -= 1
+kb.rule(rule_num).inventory += 1
+print('this num should be 1 bigger than the last:', kb.rule(rule_num).inventory)
+print('we got this jeans', kb.node('jeans').inventory)
+print('we gonna sell 1 jeans')
+with kb.dont_propagate(): #if you dont dont_propagate it, it reorders automagically!
+    kb.node('jeans').inventory -= 1
+print('now we got this many jeans', kb.node('jeans').inventory)
+print('after selling that, we got this many outfits', kb.rule(rule_num).inventory)
 
 import sys; sys.exit(0)
 

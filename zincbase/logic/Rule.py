@@ -39,3 +39,9 @@ class Rule:
         else:
             return [self._kb.node(x) for x in bindings[0].values()]
         return bindings
+    
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except:
+            raise AttributeError
