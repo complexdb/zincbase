@@ -10,17 +10,18 @@ kb.store('top(tshirt)')
 kb.store('outfit(X,Y) :- sku(X), sku(Y), top(X)')
 #print('boop', list(kb.query('outfit(X,Y)')))
 def mee(other_affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
-    #import ipdb; ipdb.set_trace()
+    print(node_that_changed, attr_changed)
     affected_nodes = list(other_affected_nodes)
     print("foo!", affected_nodes, node_that_changed, attr_changed, cur_val, prev_val)
 kb.rule(3).on_change = mee
 kb.node('tshirt').zig = 1
 #import ipdb; ipdb.set_trace()
-NEXT must get affected nodes to work. That way, when the outfit.on_change is called,
-we can see not only that tshirt stock dropped too low and we must call tshirt's watch
-in order to order more --- but we can also check on the stock for other affected
-nodes (e.g. if X=tshirt, other affected nodes would be jeans) and maybe order the same
-amount of extra jeans as we're about to order of tshirts.
+#import ipdb; ipdb.set_trace()
+# NEXT must get affected nodes to work. That way, when the outfit.on_change is called,
+# we can see not only that tshirt stock dropped too low and we must call tshirt's watch
+# in order to order more --- but we can also check on the stock for other affected
+# nodes (e.g. if X=tshirt, other affected nodes would be jeans) and maybe order the same
+# amount of extra jeans as we're about to order of tshirts.
 
 def low_stock_sku(sku, prev_val):
     if sku.inventory > prev_val:

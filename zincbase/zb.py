@@ -775,7 +775,7 @@ class KB():
         return retvals
 
     def _search(self, term):
-        head_goal = Goal(Rule("x(y):-x(y)"))
+        head_goal = Goal(Rule("x(y):-x(y)", kb=self))
         head_goal.rule.goals = [term]
         queue = deque([head_goal])
         iterations = 0
