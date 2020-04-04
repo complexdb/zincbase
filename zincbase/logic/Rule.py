@@ -45,3 +45,28 @@ class Rule:
             return self[key]
         except:
             raise AttributeError
+    
+    def __setattr__(self, key, value):
+        if key not in ('_kb', 'head', 'goals', 'on_change'):
+            print(key)
+            try:
+                prev_val = self[key]
+                print('!!!', key)
+            except AttributeError:
+                print('oops1')
+                prev_val = None
+            except TypeError:
+                if value == 2:
+                    prev_val = self.__dict__[key]
+                print('oops2')
+            except KeyError:
+                print('oops3')
+                prev_val = None
+            try:
+                print('STHSTH', self.on_change, prev_val, self.inventory)
+            except:
+                pass
+            if self.on_change and prev_val is not None:
+                with self._kb.dont_propagate():
+                    self.on_change(self, self.affected_nodes, self, key, value, prev_val)
+        super().__setattr__(key, value)
