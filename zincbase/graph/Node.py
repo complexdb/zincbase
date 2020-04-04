@@ -86,13 +86,13 @@ class Node:
         return self._kb.neighbors(self._name)
     
     @property
-    def type(self):
-        """Returns the type(s) of the node
+    def atom(self):
+        """Returns the atom/type(s) of the node
 
         :Example:
 
         >>> kb.store('tv_show(simpsons)')
-        >>> kb.node('simpsons').type
+        >>> kb.node('simpsons').atom
         [tv_show]
         """
         # TODO cache this once computed the first time, although,
@@ -112,7 +112,7 @@ class Node:
                 if rule.head.pred in already:
                     continue
                 already.append(str(rule.head.pred))
-                for _type in self.type:
+                for _type in self.atom:
                     if _type in goal.pred:
                         yield rule
 

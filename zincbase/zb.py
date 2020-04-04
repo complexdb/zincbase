@@ -9,6 +9,7 @@ import pickle
 import random
 import re
 import sys
+import weakref
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -50,8 +51,8 @@ class KB():
         self._relation2id = {}
         self._encoded_triples = []
         self._encoded_neg_examples = []
-        self._node_cache = {}
-        self._edge_cache = {}
+        self._node_cache = weakref.WeakValueDictionary()
+        self._edge_cache = weakref.WeakValueDictionary()
         self._kg_model = None
         self._knn = None
         self._knn_index = []
@@ -176,7 +177,7 @@ class KB():
         """
         try:
             edge = self._edge_cache[(sub, pred, ob)]
-        except:
+        except KeyError:
             edge = Edge(self, sub, pred, ob)
             self._edge_cache[(sub, pred, ob)] = edge
         return edge
@@ -251,7 +252,7 @@ class KB():
         node_name = str(node_name)
         try:
             node = self._node_cache[node_name]
-        except:
+        except KeyError:
             node = Node(self, node_name, self.G.nodes(data=True)[node_name])
             self._node_cache[node_name] = node
         return node

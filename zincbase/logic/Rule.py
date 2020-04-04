@@ -36,21 +36,24 @@ class Rule(dict):
     
     @property
     def affected_nodes(self):
+        """When the computation of this rule changes, these are the nodes
+        that are/will be affected."""
         bindings = list(self._kb.query(str(self)))
         if not bindings:
             return []
         else:
             return [self._kb.node(x) for x in bindings[0].values()]
-        return bindings
 
     def __getattr__(self, key):
+        # if key in ('__getstate__', '__deepcopy__', '__setstate__'):
+        #     raise AttributeError
         try:
             return self[key]
         except:
             raise AttributeError
     
     def __setattr__(self, key, value):
-        if key not in ('_kb', 'head', 'goals', 'on_change', '_locked'):
+        if key not in ('_kb', 'head', 'goals', 'on_change', '_locked') and '__' not in key:
             try:
                 prev_val = self.__dict__[key]
             except:
