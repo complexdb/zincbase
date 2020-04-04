@@ -212,8 +212,8 @@ class KB():
         yield self._dont_propagate
         self._dont_propagate = False
 
-    def rule(self, id):
-        """Get a rule by its id.
+    def rule(self, id_or_definition):
+        """Get a rule by its id or definition.
 
         :Example:
 
@@ -221,8 +221,14 @@ class KB():
         >>> kb.store('outfit(X,Y) :- top(X), bottoms(Y)')
         0
         >>> kb.rule(0)
+        outfit(X, Y)
+        >>> kb.rule('outfit(X, Y)')
+        outfit(X, Y)
         """
-        return self.rules[id]
+        if isinstance(id_or_definition, int):
+            return self.rules[id_or_definition]
+        else:
+            return next(filter(lambda x: str(x) == id_or_definition, self.rules))
 
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.

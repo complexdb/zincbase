@@ -1,15 +1,46 @@
+# Example: Using Zincbase to create a Rules Engine
+# Our clothing shop is going to run itself.
+
 from zincbase import KB
 
 kb = KB()
 
+# Our shop sells 2 SKUs, a tshirt, and jeans. Each has some stock.
+
 kb.store('sku(tshirt)', node_attributes=[{'inventory': 10}])
 kb.store('sku(jeans)', node_attributes=[{'inventory': 3}])
+
+# Customers can buy them individually or as an outfit.
+
 kb.store('top(tshirt)')
 kb.store('bottom(jeans)')
-
 rule_num = kb.store('outfit(X, Y) :- sku(X), sku(Y), top(X), bottom(Y)')
-kb.rule(rule_num).inventory = min(kb.node('tshirt').inventory, kb.node('jeans').inventory)
-print('starting with inventory', kb.rule(rule_num).inventory)
+
+# grab the stored nodes and rule for later use
+
+tshirt = kb.node('tshirt')
+jeans = kb.node('jeans')
+outfit = kb.rule(rule_num)
+
+# Set the initial stock level of outfits
+
+outfit.inventory = min(tshirt.inventory, jeans.inventory)
+
+# Print our initial stock levels
+def print_stock():
+    print("--- stock take ---")
+    print(f"T-Shirts: {tshirt.inventory}")
+    print(f"Jeans: {jeans.inventory}")
+    print(f"Complete outfits we can sell: {outfit.inventory}")
+    print("--- stock take complete ---")
+
+print("To begin with, here's our stock levels.")
+print_stock()
+
+# Each time we sell stock, or order more, we define rules as follows:
+# * if we have 0 outfits in stock, order 1 jeans and 1 tshirt
+# * if we have 0 jeans in stock, order 1 jeans
+# * if we have 0 tshirts in stock, order 1 tshirt
 
 def inventory_changed(me, affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
     if prev_val is not None and cur_val > prev_val:

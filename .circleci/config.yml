@@ -38,7 +38,7 @@ jobs:
       - run:
           name: Run Tests
           command: |
-            python3 -m doctest zincbase/zincbase.py
+            python3 -m doctest zincbase/zb.py
             python3 -m pytest test/test_web.py
             python3 test/test_attr.py
             python3 test/test_main.py

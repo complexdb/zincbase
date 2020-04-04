@@ -11,10 +11,9 @@ class Node:
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
         nx.set_node_attributes(self._kb.G, {self._name: data})
-        with self._kb.dont_propagate():
-            self._watches = defaultdict(list)
-            for watch in watches:
-                self._watches[watch[0]].append(watch[1])
+        self._watches = defaultdict(list)
+        for watch in watches:
+            self._watches[watch[0]].append(watch[1])
     
     def __repr__(self):
         return self._name
@@ -31,12 +30,12 @@ class Node:
 
     def __getattr__(self, key):
         try:
-            if key == '__setstate__':
+            if key in ('__getstate__', '__deepcopy__', '__setstate__'):
                 raise AttributeError
             # TODO this is a bit of a hack
             return self._kb.G.nodes(data=True)[self._name][key]
         except KeyError as e:
-            raise AttributeError
+            return None
 
     def __setattr__(self, key, value):
         if self._kb._global_propagations > self._kb._PROPAGATION_LIMIT:
@@ -101,11 +100,6 @@ class Node:
         for rule in self._kb.rules:
             if len(rule.head.args) == 1 and rule.head.args[0].pred == self._name:
                 yield rule.head.pred
-        # THEN, when one of its properties changes, we can also go through
-        # kb.rules[...].args and if any of them are this node's type,
-        # then if the attribute changes, then notify that rule (e.g., outfit)
-        # that it needs to recompute. and then the outfit rule can update and trigger
-        # based on the new attributes
     
     @property
     def rules(self):
