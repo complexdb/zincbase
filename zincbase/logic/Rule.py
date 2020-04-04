@@ -2,7 +2,7 @@ from zincbase.utils.string_utils import split_on
 
 from zincbase.logic.Term import Term
 
-class Rule:
+class Rule(dict):
     
     def __init__(self, expr, on_change=None, kb=None):
         parts = split_on(expr, ':-')
@@ -10,6 +10,7 @@ class Rule:
         self.goals = []
         self._kb = kb
         self.on_change = on_change
+        self._locked = False
         if len(parts) == 2:
             sub_goals = split_on(parts[1], ',')
             for sub_goal in sub_goals:
@@ -27,9 +28,11 @@ class Rule:
         :param new_value: The new value of the changed attribute
         :param prev_val: The previous value of the changed attribute
         """
-        if not self.on_change:
+        if not self.on_change or self._locked:
             return False
+        self._locked = True
         self.on_change(self, self.affected_nodes, changed_node, attribute, new_value, prev_val)
+        self._locked = False
     
     @property
     def affected_nodes(self):
@@ -39,7 +42,7 @@ class Rule:
         else:
             return [self._kb.node(x) for x in bindings[0].values()]
         return bindings
-    
+
     def __getattr__(self, key):
         try:
             return self[key]
@@ -47,26 +50,15 @@ class Rule:
             raise AttributeError
     
     def __setattr__(self, key, value):
-        if key not in ('_kb', 'head', 'goals', 'on_change'):
-            print(key)
+        if key not in ('_kb', 'head', 'goals', 'on_change', '_locked'):
             try:
-                prev_val = self[key]
-                print('!!!', key)
-            except AttributeError:
-                print('oops1')
-                prev_val = None
-            except TypeError:
-                if value == 2:
-                    prev_val = self.__dict__[key]
-                print('oops2')
-            except KeyError:
-                print('oops3')
-                prev_val = None
-            try:
-                print('STHSTH', self.on_change, prev_val, self.inventory)
+                prev_val = self.__dict__[key]
             except:
-                pass
+                prev_val = None
             if self.on_change and prev_val is not None:
-                with self._kb.dont_propagate():
-                    self.on_change(self, self.affected_nodes, self, key, value, prev_val)
+                if not self._locked:
+                    with self._kb.dont_propagate():
+                        self._locked = True
+                        self.on_change(self, self.affected_nodes, self, key, value, prev_val)
+                self._locked = False
         super().__setattr__(key, value)

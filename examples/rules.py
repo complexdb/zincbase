@@ -12,14 +12,17 @@ kb.rule(rule_num).inventory = min(kb.node('tshirt').inventory, kb.node('jeans').
 print('starting with inventory', kb.rule(rule_num).inventory)
 
 def inventory_changed(me, affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
-    if prev_val and cur_val > prev_val:
+    if prev_val is not None and cur_val > prev_val:
         print('YOU ORDERED MORE OF OUTFIT!!!', node_that_changed)
-        return
+        for node in affected_nodes:
+            print('ordering more of!', node)
+            node.inventory += 1
     me.inventory = min([n.inventory for n in affected_nodes])
-    if me.inventory < 1:
+    if me.inventory is not None and me.inventory < 1:
         print('ordering a single more of', node_that_changed, node_that_changed.inventory)
         node_that_changed.inventory += 1
         print('after we ordered 1 more of :', node_that_changed, node_that_changed.inventory)
+        print('we got this many outfits', kb.rule(rule_num).inventory)
     else:
         print('no need to order more!')
 
@@ -30,14 +33,10 @@ kb.node('jeans').inventory -= 1
 print('our inventory of outfits is', kb.rule(rule_num).inventory)
 kb.node('jeans').inventory -= 1
 print('our inventory of outfits is', kb.rule(rule_num).inventory)
-print('----------after here dun work!!!!!!!!--------------')
 kb.rule(rule_num).inventory += 1
 print('this num should be 1 bigger than the last:', kb.rule(rule_num).inventory)
 print('we got this jeans', kb.node('jeans').inventory)
 print('we gonna sell 1 jeans')
-WHAT I AM DOING HERE. IF WE INCREMENT KB.RULE(OUTFIT).INVENTORY, IT SHOULD BE ABLE
-TO TRIGGER INVENTORY_CHANGED (ABOVE). INSTEAD, ITS EXCEEDING RECURSION DEPTH.
-print('----------after here is fine--------------')
 kb.node('jeans').inventory -= 1
 print('now we got this many jeans', kb.node('jeans').inventory)
 print('after selling that, we got this many outfits', kb.rule(rule_num).inventory)
