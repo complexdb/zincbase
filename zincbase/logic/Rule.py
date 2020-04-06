@@ -43,7 +43,7 @@ class Rule(dict):
         if not bindings:
             return []
         else:
-            return [context.node(x) for x in bindings[0].values()]
+            return [context.kb.node(x) for x in bindings[0].values()]
 
     def __getattr__(self, key):
         if key == 'affected_nodes':
