@@ -67,6 +67,9 @@ class KB():
         self._attr_loss_to_graph_loss = None
         self._pred_loss_to_graph_loss = None
 
+        from zincbase import context
+        context.kb = self
+
     def seed(self, seed):
         """Seed the RNGs for PyTorch, NumPy, and Python itself.
 
@@ -178,7 +181,7 @@ class KB():
         try:
             edge = self._edge_cache[(sub, pred, ob)]
         except KeyError:
-            edge = Edge(self, sub, pred, ob)
+            edge = Edge(sub, pred, ob)
             self._edge_cache[(sub, pred, ob)] = edge
         return edge
     
@@ -253,7 +256,7 @@ class KB():
         try:
             node = self._node_cache[node_name]
         except KeyError:
-            node = Node(self, node_name, self.G.nodes(data=True)[node_name])
+            node = Node(node_name, self.G.nodes(data=True)[node_name])
             self._node_cache[node_name] = node
         return node
 
@@ -782,7 +785,7 @@ class KB():
         return retvals
 
     def _search(self, term):
-        head_goal = Goal(Rule("x(y):-x(y)", kb=self))
+        head_goal = Goal(Rule("x(y):-x(y)"))
         head_goal.rule.goals = [term]
         queue = deque([head_goal])
         iterations = 0
@@ -944,7 +947,7 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
-        self.rules.append(Rule(statement, kb=self))
+        self.rules.append(Rule(statement))
         if edge_attributes:
             if ':-' in statement:
                 raise Exception("""Cannot set edge attributes on a rule, which is unstable. \

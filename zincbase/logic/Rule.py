@@ -1,20 +1,20 @@
 from zincbase.utils.string_utils import split_on
 
+from zincbase import context
 from zincbase.logic.Term import Term
 
 class Rule(dict):
     
-    def __init__(self, expr, on_change=None, kb=None):
+    def __init__(self, expr, on_change=None):
         parts = split_on(expr, ':-')
-        self.head = Term(parts[0], kb=kb)
+        self.head = Term(parts[0])
         self.goals = []
-        self._kb = kb
         self.on_change = on_change
         self._locked = False
         if len(parts) == 2:
             sub_goals = split_on(parts[1], ',')
             for sub_goal in sub_goals:
-                self.goals.append(Term(sub_goal, kb=self._kb))
+                self.goals.append(Term(sub_goal))
     
     def __repr__(self):
         return str(self.head)
@@ -38,29 +38,29 @@ class Rule(dict):
     def affected_nodes(self):
         """When the computation of this rule changes, these are the nodes
         that are/will be affected."""
-        bindings = list(self._kb.query(str(self)))
+        bindings = list(context.kb.query(str(self)))
         if not bindings:
             return []
         else:
-            return [self._kb.node(x) for x in bindings[0].values()]
+            return [context.node(x) for x in bindings[0].values()]
 
     def __getattr__(self, key):
-        # if key in ('__getstate__', '__deepcopy__', '__setstate__'):
-        #     raise AttributeError
+        if key == 'affected_nodes':
+            return self.affected_nodes()
         try:
             return self[key]
         except:
             raise AttributeError
     
     def __setattr__(self, key, value):
-        if key not in ('_kb', 'head', 'goals', 'on_change', '_locked') and '__' not in key:
+        if key not in ('head', 'goals', 'on_change', '_locked') and '__' not in key:
             try:
                 prev_val = self.__dict__[key]
             except:
                 prev_val = None
             if self.on_change and prev_val is not None:
                 if not self._locked:
-                    with self._kb.dont_propagate():
+                    with context.kb.dont_propagate():
                         self._locked = True
                         self.on_change(self, self.affected_nodes, self, key, value, prev_val)
                 self._locked = False
