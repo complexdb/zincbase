@@ -106,7 +106,7 @@ class Node:
     def rules(self):
         """Yield the rules that are impacted by this node."""
         already = []
-        for rule in context.kb.rules:
+        for rule in context.kb._variable_rules:
             if not rule.goals:
                 continue
             for goal in rule.goals:

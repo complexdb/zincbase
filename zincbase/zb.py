@@ -9,7 +9,6 @@ import pickle
 import random
 import re
 import sys
-import weakref
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -51,8 +50,9 @@ class KB():
         self._relation2id = {}
         self._encoded_triples = []
         self._encoded_neg_examples = []
-        self._node_cache = {}# weakref.WeakValueDictionary()
-        self._edge_cache = {}# weakref.WeakValueDictionary()
+        self._node_cache = {}
+        self._edge_cache = {}
+        self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
         self._knn = None
         self._knn_index = []
@@ -837,7 +837,8 @@ class KB():
                 rule_idx = int(rule_idx[1:])
                 self._neg_examples.pop(rule_idx)
                 return True
-            self.rules.pop(rule_idx)
+            rule = self.rules.pop(rule_idx)
+            self._variable_rules = [x for x in self._variable_rules if x != rule]
             return True
         except:
             return False

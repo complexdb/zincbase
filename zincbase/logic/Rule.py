@@ -12,6 +12,7 @@ class Rule(dict):
         self.on_change = on_change
         self._locked = False
         if len(parts) == 2:
+            context.kb._variable_rules.append(self)
             sub_goals = split_on(parts[1], ',')
             for sub_goal in sub_goals:
                 self.goals.append(Term(sub_goal))
