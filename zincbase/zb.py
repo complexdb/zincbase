@@ -838,7 +838,7 @@ class KB():
                 self._neg_examples.pop(rule_idx)
                 return True
             rule = self.rules.pop(rule_idx)
-            self._variable_rules = [x for x in self._variable_rules if x != rule]
+            self._variable_rules = [x for x in self._variable_rules if str(x) != str(rule)]
             return True
         except:
             return False
@@ -948,7 +948,9 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
-        self.rules.append(Rule(statement))
+        rule = Rule(statement)
+        self.rules.append(rule)
+
         if edge_attributes:
             if ':-' in statement:
                 raise Exception("""Cannot set edge attributes on a rule, which is unstable. \
