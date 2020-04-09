@@ -52,6 +52,7 @@ class KB():
         self._encoded_neg_examples = []
         self._node_cache = {}
         self._edge_cache = {}
+        self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
         self._knn = None
         self._knn_index = []
@@ -65,6 +66,9 @@ class KB():
         self._pred_attributes = None
         self._attr_loss_to_graph_loss = None
         self._pred_loss_to_graph_loss = None
+
+        from zincbase import context
+        context.kb = self
 
     def seed(self, seed):
         """Seed the RNGs for PyTorch, NumPy, and Python itself.
@@ -176,8 +180,8 @@ class KB():
         """
         try:
             edge = self._edge_cache[(sub, pred, ob)]
-        except:
-            edge = Edge(self, sub, pred, ob)
+        except KeyError:
+            edge = Edge(sub, pred, ob)
             self._edge_cache[(sub, pred, ob)] = edge
         return edge
     
@@ -212,6 +216,24 @@ class KB():
         yield self._dont_propagate
         self._dont_propagate = False
 
+    def rule(self, id_or_definition):
+        """Get a rule by its id or definition.
+
+        :Example:
+
+        >>> kb = KB()
+        >>> kb.store('outfit(X,Y) :- top(X), bottoms(Y)')
+        0
+        >>> kb.rule(0)
+        outfit(X, Y)
+        >>> kb.rule('outfit(X, Y)')
+        outfit(X, Y)
+        """
+        if isinstance(id_or_definition, int):
+            return self.rules[id_or_definition]
+        else:
+            return next(filter(lambda x: str(x) == id_or_definition, self.rules))
+
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.
 
@@ -233,8 +255,8 @@ class KB():
         node_name = str(node_name)
         try:
             node = self._node_cache[node_name]
-        except:
-            node = Node(self, node_name, self.G.nodes(data=True)[node_name])
+        except KeyError:
+            node = Node(node_name, self.G.nodes(data=True)[node_name])
             self._node_cache[node_name] = node
         return node
 
@@ -815,7 +837,8 @@ class KB():
                 rule_idx = int(rule_idx[1:])
                 self._neg_examples.pop(rule_idx)
                 return True
-            self.rules.pop(rule_idx)
+            rule = self.rules.pop(rule_idx)
+            self._variable_rules = [x for x in self._variable_rules if str(x) != str(rule)]
             return True
         except:
             return False
@@ -925,8 +948,14 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
-        self.rules.append(Rule(statement, kb=self))
+        rule = Rule(statement)
+        self.rules.append(rule)
+
         if edge_attributes:
+            if ':-' in statement:
+                raise Exception("""Cannot set edge attributes on a rule, which is unstable. \
+                Try creating the rule first, then setting the attribute.
+                """)
             parts = split_to_parts(statement)
             if parts[2] is not None:
                 for idx, edge in self.G[parts[0]][parts[2]].items():

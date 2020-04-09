@@ -3,18 +3,19 @@ import copy
 
 import networkx as nx
 
+from zincbase import context
+
 class Edge:
     """Class representing an edge in the KB.
     """
-    def __init__(self, kb, sub, pred, ob, data={}, watches=[]):
-        super().__setattr__('_kb', kb)
+    def __init__(self, sub, pred, ob, data={}, watches=[]):
         super().__setattr__('_name', str(sub) + '___' + str(pred) + '___' + str(ob))
         super().__setattr__('_sub', str(sub))
         super().__setattr__('_pred', str(pred))
         super().__setattr__('_ob', str(ob))
         super().__setattr__('_recursion_depth', 0)
         super().__setattr__('_watches', defaultdict(list))
-        super().__setattr__('_edge', self._kb.G[self._sub][self._ob])
+        super().__setattr__('_edge', context.kb.G[self._sub][self._ob])
         for watch in watches:
             self._watches[watch[0]].append(watch[1])
     
@@ -40,21 +41,21 @@ class Edge:
             return None
 
     def __setattr__(self, key, value):
-        if self._kb._global_propagations > self._kb._PROPAGATION_LIMIT:
+        if context.kb._global_propagations > context.kb._PROPAGATION_LIMIT:
             return False
-        if self._recursion_depth > self._kb._MAX_RECURSION:
+        if self._recursion_depth > context.kb._MAX_RECURSION:
             return False
-        self._kb._global_propagations += 1
+        context.kb._global_propagations += 1
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
         for _, attrs in self._edge.items():
             if attrs['pred'] == self._pred:
                 prev_val = attrs.get(key, None)
                 attrs.update({key: value})
-                if not self._kb._dont_propagate:
+                if not context.kb._dont_propagate:
                     for watch_fn in self._watches.get(key, []):
                         watch_fn(self, prev_val)
                 super().__setattr__('_recursion_depth', self._recursion_depth - 1)
-                self._kb._global_propagations -= 1
+                context.kb._global_propagations -= 1
 
     def __getitem__(self, key):
         return self.__getattr__(key)
@@ -77,7 +78,7 @@ class Edge:
     def nodes(self):
         """Return the nodes that this edge is connected to as tuple of (subject, object)
         """
-        return [self._kb.node(self._sub), self._kb.node(self._ob)]
+        return [context.kb.node(self._sub), context.kb.node(self._ob)]
 
     @property
     def attrs(self):
