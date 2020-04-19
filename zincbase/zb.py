@@ -31,6 +31,11 @@ from zincbase.nn.dataloader import NegDataset, TrainDataset, BidirectionalOneSho
 from zincbase.nn.rotate import KGEModel
 from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cleanse
 
+import redis
+red = redis.Redis()
+red.delete('rules')
+        
+
 class KB():
     """Knowledge Base Class
 
@@ -789,7 +794,7 @@ class KB():
         head_goal.rule.goals = [term]
         queue = deque([head_goal])
         iterations = 0
-        max_iterations = max(100, (len(self.rules) + 1) ** 1.5)
+        max_iterations = max(100, (red.llen('rules') + 1) ** 1.5)
         while queue and iterations < max_iterations:
             iterations += 1
             c = queue.popleft()
@@ -808,7 +813,8 @@ class KB():
                 continue
             term = c.rule.goals[c.idx]
             pred = term.pred
-            for rule in self.rules:
+            for i in range(red.llen('rules')):#rule in self.rules:
+                rule = pickle.loads(red.lrange('rules', i, i)[0])
                 if rule.head.pred != term.pred:
                     continue
                 if len(rule.head.args) != len(term.args):
@@ -949,7 +955,9 @@ class KB():
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
-        self.rules.append(rule)
+        
+        red.lpush('rules', pickle.dumps(rule))
+        #self.rules.append(rule)
 
         if edge_attributes:
             if ':-' in statement:
@@ -966,7 +974,7 @@ class KB():
             nx.set_node_attributes(self.G, {parts[0]: node_attributes[0]})
             if parts[2] is not None:
                 nx.set_node_attributes(self.G, {parts[2]: node_attributes[1]})
-        return len(self.rules) - 1
+        return red.llen('rules') #len(self.rules) - 1
 
     def to_tensorboard_projector(self, embeddings_filename, labels_filename, filter_fn=None):
         """Convert the KB's trained embeddings to 2 files suitable for \
