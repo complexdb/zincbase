@@ -33,7 +33,7 @@ from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cl
 
 import redis
 red = redis.Redis()
-red.delete('rules')
+#red.delete('rules')
         
 
 class KB():
@@ -813,8 +813,22 @@ class KB():
                 continue
             term = c.rule.goals[c.idx]
             pred = term.pred
-            for i in range(red.llen('rules')):#rule in self.rules:
+
+            to_check = []
+            for arg in term.args:
+                key = str(term.pred) + '__' + str(arg)
+                to_check += [int(i) for i in red.lrange(key, 0, -1)]
+            #print(f'need to check {to_check}')
+
+            for i in to_check: #range(red.llen('rules')):
+                #print(i)
+                # optimize below line: keep a cache of nodes (weakref! probably
+                # only need to keep cache for this recursion)
                 rule = pickle.loads(red.lrange('rules', i, i)[0])
+                #print(f'rule {i} is {rule}')
+                # optimize below line: for each pred (eg links_to) keep a list
+                # of indexes in the main rules list. so we can just do (above)
+                # for i in red.get(term.pred) instead of going thru whole list of all rules
                 if rule.head.pred != term.pred:
                     continue
                 if len(rule.head.args) != len(term.args):
@@ -956,7 +970,12 @@ class KB():
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
         
-        red.lpush('rules', pickle.dumps(rule))
+        length = red.rpush('rules', pickle.dumps(rule))
+        length -= 1
+        for arg in rule.head.args:
+            if str(arg).lower() == str(arg):
+                idx = rule.head.pred + '__' + str(arg)
+                red.rpush(idx, length)
         #self.rules.append(rule)
 
         if edge_attributes:
@@ -974,7 +993,7 @@ class KB():
             nx.set_node_attributes(self.G, {parts[0]: node_attributes[0]})
             if parts[2] is not None:
                 nx.set_node_attributes(self.G, {parts[2]: node_attributes[1]})
-        return red.llen('rules') #len(self.rules) - 1
+        return length
 
     def to_tensorboard_projector(self, embeddings_filename, labels_filename, filter_fn=None):
         """Convert the KB's trained embeddings to 2 files suitable for \
