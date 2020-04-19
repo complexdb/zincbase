@@ -813,19 +813,27 @@ class KB():
                 continue
             term = c.rule.goals[c.idx]
             pred = term.pred
-
+            import ipdb; ipdb.set_trace()
             to_check = []
             for arg in term.args:
                 key = str(term.pred) + '__' + str(arg)
                 to_check += [int(i) for i in red.lrange(key, 0, -1)]
-            #print(f'need to check {to_check}')
+            print(f'need to check {to_check}')
+            
+            # TODO NEXT: if it's a (variable) rule, to_check
+            # comes up empty hence I made it check all the
+            # rules on the next line. What is the strategy to
+            # optimize this? e.g. kb.store('is_b(X):-links(a,X),links(c,X)')
+
+            if not to_check:
+                to_check = [0,1,2,3]
 
             for i in to_check: #range(red.llen('rules')):
                 #print(i)
                 # optimize below line: keep a cache of nodes (weakref! probably
                 # only need to keep cache for this recursion)
                 rule = pickle.loads(red.lrange('rules', i, i)[0])
-                #print(f'rule {i} is {rule}')
+                print(f'rule {i} is {rule}')
                 # optimize below line: for each pred (eg links_to) keep a list
                 # of indexes in the main rules list. so we can just do (above)
                 # for i in red.get(term.pred) instead of going thru whole list of all rules
