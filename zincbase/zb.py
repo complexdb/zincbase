@@ -823,10 +823,13 @@ class KB():
                 to_check += [int(i) for i in red.lrange(key, 0, -1)]
 
             for i in to_check:
-                # optimize below line: keep a cache of nodes (weakref! probably
-                # only need to keep cache for this recursion)
-                rule = pickle.loads(red.lrange('rules', i, i)[0])
-                print(f'rule {i} is {rule}')
+                # TODO make this cache weakrefs only, they probably only
+                # need to last for this recursion
+                if not f'rules{i}' in self._node_cache:
+                    rule = pickle.loads(red.lrange('rules', i, i)[0])
+                    self._node_cache[f'rules{i}'] = rule
+                else:
+                    rule = self._node_cache[f'rules{i}']
                 # optimize below line: index by arity
                 # if len(rule.head.args) != len(term.args):
                 #     print('continuing cos not equal', rule.head.args, term.args)
