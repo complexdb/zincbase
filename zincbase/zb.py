@@ -13,6 +13,7 @@ import sys
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import redis
 from scipy.special import expit
 from sklearn.neighbors import NearestNeighbors
 from sklearn.svm import SVC
@@ -31,7 +32,6 @@ from zincbase.nn.dataloader import NegDataset, TrainDataset, BidirectionalOneSho
 from zincbase.nn.rotate import KGEModel
 from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cleanse
 
-import redis
 red = redis.Redis()
 #red.delete('rules')
         
@@ -235,7 +235,7 @@ class KB():
         outfit(X, Y)
         """
         if isinstance(id_or_definition, int):
-            return self.rules[id_or_definition]
+            return pickle.loads(red.lrange('rules', id_or_definition, id_or_definition)[0])
         else:
             return next(filter(lambda x: str(x) == id_or_definition, self.rules))
 
@@ -813,34 +813,24 @@ class KB():
                 continue
             term = c.rule.goals[c.idx]
             pred = term.pred
-            import ipdb; ipdb.set_trace()
             to_check = []
             for arg in term.args:
                 key = str(term.pred) + '__' + str(arg)
                 to_check += [int(i) for i in red.lrange(key, 0, -1)]
-            print(f'need to check {to_check}')
-            
-            # TODO NEXT: if it's a (variable) rule, to_check
-            # comes up empty hence I made it check all the
-            # rules on the next line. What is the strategy to
-            # optimize this? e.g. kb.store('is_b(X):-links(a,X),links(c,X)')
 
             if not to_check:
-                to_check = [0,1,2,3]
+                key = str(term.pred) + '__rule'
+                to_check += [int(i) for i in red.lrange(key, 0, -1)]
 
-            for i in to_check: #range(red.llen('rules')):
-                #print(i)
+            for i in to_check:
                 # optimize below line: keep a cache of nodes (weakref! probably
                 # only need to keep cache for this recursion)
                 rule = pickle.loads(red.lrange('rules', i, i)[0])
                 print(f'rule {i} is {rule}')
-                # optimize below line: for each pred (eg links_to) keep a list
-                # of indexes in the main rules list. so we can just do (above)
-                # for i in red.get(term.pred) instead of going thru whole list of all rules
-                if rule.head.pred != term.pred:
-                    continue
-                if len(rule.head.args) != len(term.args):
-                    continue
+                # optimize below line: index by arity
+                # if len(rule.head.args) != len(term.args):
+                #     print('continuing cos not equal', rule.head.args, term.args)
+                #     continue
                 child = Goal(rule, c)
                 ans = unify(term, c.bindings, rule.head, child.bindings)
                 if ans:
@@ -977,14 +967,17 @@ class KB():
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
-        
         length = red.rpush('rules', pickle.dumps(rule))
         length -= 1
+        bound = False
         for arg in rule.head.args:
             if str(arg).lower() == str(arg):
                 idx = rule.head.pred + '__' + str(arg)
                 red.rpush(idx, length)
-        #self.rules.append(rule)
+                bound = True
+        if not bound:
+            idx = rule.head.pred + '__rule'
+            red.rpush(idx, length)
 
         if edge_attributes:
             if ':-' in statement:
