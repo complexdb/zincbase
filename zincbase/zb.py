@@ -31,10 +31,7 @@ from zincbase.logic.common import unify, process
 from zincbase.nn.dataloader import NegDataset, TrainDataset, BidirectionalOneShotIterator
 from zincbase.nn.rotate import KGEModel
 from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cleanse
-
-red = redis.Redis()
-#red.delete('rules')
-        
+      
 
 class KB():
     """Knowledge Base Class
@@ -43,7 +40,7 @@ class KB():
     >>> kb.__class__
     <class 'zb.KB'>
     """
-    def __init__(self):
+    def __init__(self, host, port, db):
         self.G = nx.MultiDiGraph()
         self.rules = []
         self._dont_propagate = False
@@ -72,8 +69,13 @@ class KB():
         self._attr_loss_to_graph_loss = None
         self._pred_loss_to_graph_loss = None
 
+        self.redis = redis.Redis(host, port, db)
+    
         from zincbase import context
         context.kb = self
+
+    def reset(self):
+        self.redis.flushdb()
 
     def seed(self, seed):
         """Seed the RNGs for PyTorch, NumPy, and Python itself.
@@ -235,7 +237,7 @@ class KB():
         outfit(X, Y)
         """
         if isinstance(id_or_definition, int):
-            return pickle.loads(red.lrange('rules', id_or_definition, id_or_definition)[0])
+            return pickle.loads(self.redis.lrange('rules', id_or_definition, id_or_definition)[0])
         else:
             return next(filter(lambda x: str(x) == id_or_definition, self.rules))
 
@@ -794,7 +796,7 @@ class KB():
         head_goal.rule.goals = [term]
         queue = deque([head_goal])
         iterations = 0
-        max_iterations = max(100, (red.llen('rules') + 1) ** 1.5)
+        max_iterations = max(100, (self.redis.llen('rules') + 1) ** 1.5)
         while queue and iterations < max_iterations:
             iterations += 1
             c = queue.popleft()
@@ -813,20 +815,26 @@ class KB():
                 continue
             term = c.rule.goals[c.idx]
             pred = term.pred
-            to_check = []
+            to_check = set()
             for arg in term.args:
                 key = str(term.pred) + '__' + str(arg)
-                to_check += [int(i) for i in red.lrange(key, 0, -1)]
+                to_check.update([int(i) for i in self.redis.lrange(key, 0, -1)])
 
             if not to_check:
                 key = str(term.pred) + '__rule'
-                to_check += [int(i) for i in red.lrange(key, 0, -1)]
+                to_check.update([int(i) for i in self.redis.lrange(key, 0, -1)])
+            
+            if not to_check:
+                key = str(term.pred) + '__*'
+                matching_keys = self.redis.keys(key)
+                for key in matching_keys:
+                    to_check.update([int(i) for i in self.redis.lrange(key, 0, -1)])
 
             for i in to_check:
                 # TODO make this cache weakrefs only, they probably only
                 # need to last for this recursion
                 if not f'rules{i}' in self._node_cache:
-                    rule = pickle.loads(red.lrange('rules', i, i)[0])
+                    rule = pickle.loads(self.redis.lrange('rules', i, i)[0])
                     self._node_cache[f'rules{i}'] = rule
                 else:
                     rule = self._node_cache[f'rules{i}']
@@ -858,7 +866,13 @@ class KB():
                 rule_idx = int(rule_idx[1:])
                 self._neg_examples.pop(rule_idx)
                 return True
-            rule = self.rules.pop(rule_idx)
+            # TODO firstly, have not handled _neg_examples, second,
+            # should delete the artefacts such as links__a in addition
+            # to deleting the rule from `rules` which is all this does.
+            rule = self.redis.lrange('rules', rule_idx, rule_idx)
+            rule_decode = pickle.loads(rule[0])
+            self.redis.delete(rule_decode.head.pred + '__' + str(rule_decode.head.args[0]))
+            self.redis.lrem('rules', 1, rule[0])
             self._variable_rules = [x for x in self._variable_rules if str(x) != str(rule)]
             return True
         except:
@@ -970,17 +984,17 @@ class KB():
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
-        length = red.rpush('rules', pickle.dumps(rule))
+        length = self.redis.rpush('rules', pickle.dumps(rule))
         length -= 1
         bound = False
         for arg in rule.head.args:
             if str(arg).lower() == str(arg):
                 idx = rule.head.pred + '__' + str(arg)
-                red.rpush(idx, length)
+                self.redis.rpush(idx, length)
                 bound = True
         if not bound:
             idx = rule.head.pred + '__rule'
-            red.rpush(idx, length)
+            self.redis.rpush(idx, length)
 
         if edge_attributes:
             if ':-' in statement:

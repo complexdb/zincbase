@@ -3,12 +3,14 @@ import types
 import context
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 b = kb.store('c(x)'); assert b == 0
 b = kb.query('c(X)'); assert isinstance(b, types.GeneratorType); b = list(b); 
 assert len(b) == 1; assert b[0]['X'] == 'x'; assert kb.node(b[0]['X']) == 'x'; assert kb.node(b[0]['X']).attrs == {}
 b = kb.store('c(y)'); assert b == 1
-b = kb.delete_rule(1); assert b; assert not list(kb.query('c(y)'))
+b = kb.delete_rule(1); assert b;
+assert not list(kb.query('c(y)'))
 b = kb.store('c(y)'); assert b == 1
 b = kb.query('c(X)'); b = list(b); assert len(b) == 2; assert b[0]['X'] in ('x', 'y');
 assert b[1]['X'] in ('x', 'y'); assert b[0]['X'] != b[1]['X']; assert kb.node(b[0]['X']).attrs == {}
@@ -68,7 +70,7 @@ kb.store('works_on(oleg, neural_networks)')
 b = kb.query('X_is_engineer_at_primer_doing_neural_networks(Brainiac)'); b = list(b); assert b; assert len(b) == 2; assert b[0]['Brainiac'] in ['oleg', 'tom']
 assert b[1]['Brainiac'] in ['oleg', 'tom']; assert b[1]['Brainiac'] != b[0]['Brainiac'];
 
-kb = KB()
+kb.reset()
 kb.store('gave_mono_to(john, jane)')
 kb.store('gave_mono_to(jane, phil)')
 b = kb.bfs('john', 'phil'); b = list(b); assert len(b) == 1 
