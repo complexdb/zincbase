@@ -239,7 +239,14 @@ class KB():
         if isinstance(id_or_definition, int):
             return pickle.loads(self.redis.lrange('rules', id_or_definition, id_or_definition)[0])
         else:
-            return next(filter(lambda x: str(x) == id_or_definition, self.rules))
+            try:
+                return next(filter(lambda x: str(x) == id_or_definition, self.rules))
+            except:
+                idx = split_to_parts(id_or_definition)[1]
+                rule_num = idx + '__rule'
+                rule_num = self.redis.lrange(rule_num, 0, 0)[0]
+                return pickle.loads(self.redis.lrange('rules', rule_num, rule_num)[0])
+
 
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.
@@ -990,11 +997,13 @@ class KB():
         for arg in rule.head.args:
             if str(arg).lower() == str(arg):
                 idx = rule.head.pred + '__' + str(arg)
-                self.redis.rpush(idx, length)
+                val = self.redis.rpush(idx, length)
                 bound = True
         if not bound:
             idx = rule.head.pred + '__rule'
-            self.redis.rpush(idx, length)
+            val = self.redis.rpush(idx, length)
+        import ipdb; ipdb.set_trace()
+        #self.rule(val).redis_key = val
 
         if edge_attributes:
             if ':-' in statement:

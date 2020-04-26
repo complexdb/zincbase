@@ -1,7 +1,8 @@
 import context
 
 from zincbase import KB
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 
 kb.store('bought_ticket(tom)')
 
@@ -14,7 +15,6 @@ fake_lottery_win = kb.store('had_correct_numbers(tom)')
 assert list(kb.query('winner(X)')) == [{'X': 'tom'}]
 kb.delete_rule(fake_lottery_win)
 assert list(kb.query('winner(X)')) == []
-
 tom = kb.node('tom')
 
 possible_winner_called = 0
@@ -25,6 +25,11 @@ def possible_winner(me, affected_nodes, node_that_changed, attr_changed, cur_val
         return False
 
 kb.rule(rule_num).on_change = possible_winner
+import ipdb; ipdb.set_trace()
+# TODO Next what I am trying to do here is to
+# update the rule as stored in redis when there's
+# an update, e.g., an on_change function (or anything
+# in the rule's __setattr__)
 
 full_winner_called = 0
 def full_winner(node, prev_val):

@@ -68,4 +68,9 @@ class Rule(dict):
                         self._locked = True
                         self.on_change(self, self.affected_nodes, self, key, value, prev_val)
                 self._locked = False
+        if key == 'redis_key':
+            import ipdb; ipdb.set_trace()
         super().__setattr__(key, value)
+        #if key == 'on_change' and value:
+        # idx = context.kb.redis.
+        # context.kb.redis.lset()
