@@ -1,3 +1,5 @@
+import dill
+
 from zincbase.utils.string_utils import split_on
 
 from zincbase import context
@@ -12,6 +14,7 @@ class Rule(dict):
         self.on_change = on_change
         self._locked = False
         self._is_variable = False
+        self._redis_key = None
         if len(parts) == 2:
             self._is_variable = True
             context.kb._variable_rules.append(self)
@@ -32,6 +35,7 @@ class Rule(dict):
         :param new_value: The new value of the changed attribute
         :param prev_val: The previous value of the changed attribute
         """
+        print('attempted change!!', changed_node, attribute, new_value, prev_val, 'on change is (should not be none)->', self.on_change)
         if not self.on_change or self._locked:
             return False
         self._locked = True
@@ -43,6 +47,7 @@ class Rule(dict):
         """When the computation of this rule changes, these are the nodes
         that are/will be affected."""
         bindings = list(context.kb.query(str(self)))
+        print('here are affected nodes', bindings)
         if not bindings:
             return []
         else:
@@ -57,7 +62,7 @@ class Rule(dict):
             raise AttributeError
     
     def __setattr__(self, key, value):
-        if key not in ('head', 'goals', 'on_change', '_locked') and '__' not in key:
+        if key not in ('head', 'goals', 'on_change', '_locked', '_redis_key') and '__' not in key:
             try:
                 prev_val = self.__dict__[key]
             except:
@@ -66,11 +71,10 @@ class Rule(dict):
                 if not self._locked:
                     with context.kb.dont_propagate():
                         self._locked = True
+                        print('weeeeeee proooooooop')
                         self.on_change(self, self.affected_nodes, self, key, value, prev_val)
                 self._locked = False
-        if key == 'redis_key':
-            import ipdb; ipdb.set_trace()
         super().__setattr__(key, value)
-        #if key == 'on_change' and value:
-        # idx = context.kb.redis.
-        # context.kb.redis.lset()
+        if hasattr(self, "_redis_key") and self._redis_key and self._redis_key != -1:
+            me = dill.dumps(self)
+            context.kb.redis.lset('rules', self._redis_key, me)

@@ -20,12 +20,12 @@ tom = kb.node('tom')
 possible_winner_called = 0
 def possible_winner(me, affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
     global possible_winner_called
+    print('was called!!!!!!!!!!!!')
     if cur_val != 6:
         possible_winner_called += 1
         return False
-
 kb.rule(rule_num).on_change = possible_winner
-import ipdb; ipdb.set_trace()
+print(f'This should exist: {kb.rule(rule_num).on_change}')
 # TODO Next what I am trying to do here is to
 # update the rule as stored in redis when there's
 # an update, e.g., an on_change function (or anything
@@ -44,7 +44,7 @@ def full_winner(node, prev_val):
         full_winner_called += 1
 
 kb.node('tom').watch('correct_numbers', full_winner)
-
+import ipdb; ipdb.set_trace()
 kb.node('tom').correct_numbers = 5
 assert possible_winner_called == 1
 kb.node('tom').correct_numbers = 6

@@ -50,9 +50,11 @@ class Node:
         attrs.update({key: value})
         nx.set_node_attributes(context.kb.G, {self._name: attrs})
         if not context.kb._dont_propagate:
+            print(list(self.rules), 'those are dem rules')
             for watch_fn in self._watches.get(key, []):
                 watch_fn(self, prev_val)
             for rule in self.rules:
+                print('weewwwo', rule, key, value, prev_val)
                 rule.execute_change(self, key, value, prev_val)
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
         context.kb._global_propagations -= 1
@@ -106,7 +108,8 @@ class Node:
     def rules(self):
         """Yield the rules that are impacted by this node."""
         already = []
-        for rule in context.kb._variable_rules:
+        print('weqqwer', context.kb._variable_rules)
+        for rule in context.kb.rules:#_variable_rules:
             if not rule.goals:
                 continue
             for goal in rule.goals:

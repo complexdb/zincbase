@@ -5,7 +5,7 @@ import csv
 import json
 import math
 import os
-import pickle
+import dill
 import random
 import re
 import sys
@@ -42,7 +42,6 @@ class KB():
     """
     def __init__(self, host, port, db):
         self.G = nx.MultiDiGraph()
-        self.rules = []
         self._dont_propagate = False
         self._MAX_RECURSION = 1
         self._PROPAGATION_LIMIT = math.inf
@@ -223,6 +222,11 @@ class KB():
         yield self._dont_propagate
         self._dont_propagate = False
 
+    @property
+    def rules(self):
+        for rule_num in range(self.redis.llen('rules')):
+            yield dill.loads(self.redis.lrange('rules', rule_num, rule_num)[0])
+
     def rule(self, id_or_definition):
         """Get a rule by its id or definition.
 
@@ -237,7 +241,7 @@ class KB():
         outfit(X, Y)
         """
         if isinstance(id_or_definition, int):
-            return pickle.loads(self.redis.lrange('rules', id_or_definition, id_or_definition)[0])
+            return dill.loads(self.redis.lrange('rules', id_or_definition, id_or_definition)[0])
         else:
             try:
                 return next(filter(lambda x: str(x) == id_or_definition, self.rules))
@@ -245,7 +249,7 @@ class KB():
                 idx = split_to_parts(id_or_definition)[1]
                 rule_num = idx + '__rule'
                 rule_num = self.redis.lrange(rule_num, 0, 0)[0]
-                return pickle.loads(self.redis.lrange('rules', rule_num, rule_num)[0])
+                return dill.loads(self.redis.lrange('rules', rule_num, rule_num)[0])
 
 
     def node(self, node_name):
@@ -269,7 +273,9 @@ class KB():
         node_name = str(node_name)
         try:
             node = self._node_cache[node_name]
+            print(f'got node from cache! {node_name}')
         except KeyError:
+            print(f'could not get node from cache! {node_name}')
             node = Node(node_name, self.G.nodes(data=True)[node_name])
             self._node_cache[node_name] = node
         return node
@@ -475,7 +481,7 @@ class KB():
             'rules': self.rules
         }
         f = open(os.path.join(dirname, 'zb.pkl'), 'wb')
-        pickle.dump(zb_dict, f)
+        dill.dump(zb_dict, f)
         f.close()
         return True
 
@@ -487,7 +493,7 @@ class KB():
         it to be on the GPU."""
 
         with open(os.path.join(dirname, 'zb.pkl'), 'rb') as f:
-            zb_dict = pickle.load(f)
+            zb_dict = dill.load(f)
         self._model_name = zb_dict['model_name']
         self._entity2id = zb_dict['entity2id']
         self._relation2id = zb_dict['relation2id']
@@ -841,7 +847,7 @@ class KB():
                 # TODO make this cache weakrefs only, they probably only
                 # need to last for this recursion
                 if not f'rules{i}' in self._node_cache:
-                    rule = pickle.loads(self.redis.lrange('rules', i, i)[0])
+                    rule = dill.loads(self.redis.lrange('rules', i, i)[0])
                     self._node_cache[f'rules{i}'] = rule
                 else:
                     rule = self._node_cache[f'rules{i}']
@@ -877,7 +883,7 @@ class KB():
             # should delete the artefacts such as links__a in addition
             # to deleting the rule from `rules` which is all this does.
             rule = self.redis.lrange('rules', rule_idx, rule_idx)
-            rule_decode = pickle.loads(rule[0])
+            rule_decode = dill.loads(rule[0])
             self.redis.delete(rule_decode.head.pred + '__' + str(rule_decode.head.args[0]))
             self.redis.lrem('rules', 1, rule[0])
             self._variable_rules = [x for x in self._variable_rules if str(x) != str(rule)]
@@ -991,7 +997,8 @@ class KB():
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
-        length = self.redis.rpush('rules', pickle.dumps(rule))
+        rule._redis_key = self.redis.llen('rules') - 1
+        length = self.redis.rpush('rules', dill.dumps(rule))
         length -= 1
         bound = False
         for arg in rule.head.args:
@@ -1001,9 +1008,7 @@ class KB():
                 bound = True
         if not bound:
             idx = rule.head.pred + '__rule'
-            val = self.redis.rpush(idx, length)
-        import ipdb; ipdb.set_trace()
-        #self.rule(val).redis_key = val
+            self.redis.rpush(idx, length)
 
         if edge_attributes:
             if ':-' in statement:
