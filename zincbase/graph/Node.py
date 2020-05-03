@@ -82,6 +82,13 @@ class Node:
         except:
             pass
         return attributes
+
+    def update(self, attrs):
+        """Updates (in bulk) this node's attributes.
+        NOTE: Does not propagate; for that, set attributes one-by-one."""
+        self._dict.update(attrs)
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__node', me)
     
     @property
     def neighbors(self):

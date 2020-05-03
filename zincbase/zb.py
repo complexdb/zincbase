@@ -1026,9 +1026,9 @@ class KB():
                         nx.set_edge_attributes(self.G, {(parts[0], parts[2], idx): edge_attributes})
         if node_attributes:
             parts = split_to_parts(statement)
-            nx.set_node_attributes(self.G, {parts[0]: node_attributes[0]})
+            self.node(parts[0]).update(node_attributes[0])
             if parts[2] is not None:
-                nx.set_node_attributes(self.G, {parts[2]: node_attributes[1]})
+                self.node(parts[2]).update(node_attributes[1])
         return length
 
     def to_tensorboard_projector(self, embeddings_filename, labels_filename, filter_fn=None):

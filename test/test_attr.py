@@ -2,7 +2,8 @@ import context
 
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.seed(555)
 
 kb.store('person(tom)')
@@ -107,7 +108,9 @@ assert kb.edge(3, 'connected_nodes', 4).power_level == 3
 kb.edge(3, 'connected_nodes', 4).power_level = 'high'
 assert kb.edge(3, 'connected_nodes', 4).power_level == 'high'
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
+
 kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
 kb.node('mali').zig = 123
 called = False
