@@ -13,7 +13,7 @@ class Node:
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
         super().__setattr__('_dict', data)
-        nx.set_node_attributes(context.kb.G, {self._name: data})
+        #nx.set_node_attributes(context.kb.G, {self._name: data})
         #self._watches = defaultdict(list)
         self._dict['_watches'] = defaultdict(list)
         for watch in watches:
@@ -36,37 +36,23 @@ class Node:
         try:
             if key in ('__getstate__', '__deepcopy__', '__setstate__'):
                 raise AttributeError
-            # TODO this is a bit of a hack
-            # return context.kb.G.nodes(data=True)[self._name][key]
-            print('3333 getting', key)
             return self._dict.get(key, None)
         except KeyError as e:
             return None
 
     def __setattr__(self, key, value):
-
-        print('44444 setting', key, value)
         if context.kb._global_propagations > context.kb._PROPAGATION_LIMIT:
             return False
         if self._recursion_depth > context.kb._MAX_RECURSION:
             return False
         context.kb._global_propagations += 1
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
-
-        # attrs = context.kb.G.nodes(data=True)[self._name]
-        # prev_val = attrs.get(key, None)
-        # attrs.update({key: value})
         prev_val = self._dict.get(key, None)
         self._dict.update({key: value})
         me = dill.dumps(self)
         context.kb.redis.set(self._name + '__node', me)
-        
-        # nx.set_node_attributes(context.kb.G, {self._name: attrs})
-
         if not context.kb._dont_propagate:
-            print('1111',self, key, value, prev_val)
             for watch_fn in self._dict['_watches'].get(key, []):
-                print('2222', watch_fn)
                 watch_fn(self, prev_val)
             for rule in self.rules:
                 rule.execute_change(self, key, value, prev_val)
@@ -80,7 +66,6 @@ class Node:
         return self.__setattr__(key, value)
     
     def __delitem__(self, key):
-        #del context.kb.G.nodes[self._name][key]
         del self._dict[key]
         me = dill.dumps(self)
         context.kb.redis.set(self._name + '__node', me)
@@ -89,7 +74,7 @@ class Node:
     def attrs(self):
         """Returns attributes of the node stored in the KB
         """
-        attributes = self._dict# context.kb.G.nodes(data=True)[self._name]
+        attributes = self._dict
         attributes = copy.deepcopy(attributes)
         try:
             del attributes['_watches']
@@ -165,7 +150,6 @@ class Node:
 
         """
         with context.kb.dont_propagate():
-            print('!!!! adding watch', attribute, fn)
             self._dict['_watches'][attribute].append(fn)
             me = dill.dumps(self)
             context.kb.redis.set(self._name + '__node', me)

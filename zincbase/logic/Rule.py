@@ -37,7 +37,6 @@ class Rule(dict):
         """
         if not self.on_change or self._locked or attribute[0] == '_':
             return False
-        print('wot changed is', attribute)
         self._locked = True
         self.on_change(self, self.affected_nodes, changed_node, attribute, new_value, prev_val)
         self._locked = False

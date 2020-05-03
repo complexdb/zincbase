@@ -274,9 +274,7 @@ class KB():
         node_name = str(node_name)
         try:
             node = self._node_cache[node_name]
-            print(f'got node from cache! {node_name}')
         except KeyError:
-            print(f'could not get node from cache! {node_name}')
             node_redis_key = node_name + '__node'
             try:
                 return dill.loads(self.redis.get(node_redis_key))
