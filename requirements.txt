@@ -1,6 +1,8 @@
+dill
 matplotlib
 networkx
 numpy
+redis
 scipy
 sklearn
 torch

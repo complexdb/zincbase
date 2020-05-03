@@ -9,6 +9,7 @@ import dill
 import random
 import re
 import sys
+import weakref
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -51,7 +52,7 @@ class KB():
         self._relation2id = {}
         self._encoded_triples = []
         self._encoded_neg_examples = []
-        self._node_cache = {}
+        self._node_cache = {}#weakref.WeakValueDictionary()
         self._edge_cache = {}
         self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
@@ -997,7 +998,7 @@ class KB():
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
         rule = Rule(statement)
-        rule._redis_key = self.redis.llen('rules') - 1
+        rule._redis_key = self.redis.llen('rules')
         length = self.redis.rpush('rules', dill.dumps(rule))
         length -= 1
         bound = False

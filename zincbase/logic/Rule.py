@@ -35,7 +35,6 @@ class Rule(dict):
         :param new_value: The new value of the changed attribute
         :param prev_val: The previous value of the changed attribute
         """
-        print('attempted change!!', changed_node, attribute, new_value, prev_val, 'on change is (should not be none)->', self.on_change)
         if not self.on_change or self._locked:
             return False
         self._locked = True
@@ -47,7 +46,6 @@ class Rule(dict):
         """When the computation of this rule changes, these are the nodes
         that are/will be affected."""
         bindings = list(context.kb.query(str(self)))
-        print('here are affected nodes', bindings)
         if not bindings:
             return []
         else:
@@ -71,10 +69,13 @@ class Rule(dict):
                 if not self._locked:
                     with context.kb.dont_propagate():
                         self._locked = True
-                        print('weeeeeee proooooooop')
                         self.on_change(self, self.affected_nodes, self, key, value, prev_val)
                 self._locked = False
+        if hasattr(self, '_redis_key') and key == '_redis_key' and self._redis_key is None:
+            first_redis_key = True
+        else:
+            first_redis_key = False
         super().__setattr__(key, value)
-        if hasattr(self, "_redis_key") and self._redis_key and self._redis_key != -1:
+        if not first_redis_key and hasattr(self, "_redis_key") and self._redis_key is not None and self._redis_key != -1:
             me = dill.dumps(self)
             context.kb.redis.lset('rules', self._redis_key, me)
