@@ -8,7 +8,7 @@
 
 <img src="https://user-images.githubusercontent.com/2245347/57199440-c45daf00-6f33-11e9-91df-1a6a9cae6fb7.png" width="140" alt="Zincbase logo">
 
-ZincBase is a state of the art knowledge base and complex simulation suite. It does the following:
+Zincbase is a state of the art knowledge base and complex simulation suite. It does the following:
 
 * Store and retrieve graph structured data efficiently.
 * Provide ways to query the graph, including via bleeding-edge graph neural networks.
