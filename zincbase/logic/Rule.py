@@ -35,8 +35,9 @@ class Rule(dict):
         :param new_value: The new value of the changed attribute
         :param prev_val: The previous value of the changed attribute
         """
-        if not self.on_change or self._locked:
+        if not self.on_change or self._locked or attribute[0] == '_':
             return False
+        print('wot changed is', attribute)
         self._locked = True
         self.on_change(self, self.affected_nodes, changed_node, attribute, new_value, prev_val)
         self._locked = False
@@ -45,7 +46,7 @@ class Rule(dict):
     def affected_nodes(self):
         """When the computation of this rule changes, these are the nodes
         that are/will be affected."""
-        bindings = list(context.kb.query(str(self)))
+        bindings = list(context.kb.query(str(self))) #TODO easy optimization
         if not bindings:
             return []
         else:

@@ -50,6 +50,7 @@ class Node:
         attrs.update({key: value})
         nx.set_node_attributes(context.kb.G, {self._name: attrs})
         if not context.kb._dont_propagate:
+            print(self, key, value, prev_val)
             for watch_fn in self._watches.get(key, []):
                 watch_fn(self, prev_val)
             for rule in self.rules:

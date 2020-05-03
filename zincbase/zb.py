@@ -52,7 +52,7 @@ class KB():
         self._relation2id = {}
         self._encoded_triples = []
         self._encoded_neg_examples = []
-        self._node_cache = {}#weakref.WeakValueDictionary()
+        self._node_cache = weakref.WeakValueDictionary()
         self._edge_cache = {}
         self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
