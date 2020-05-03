@@ -277,8 +277,13 @@ class KB():
             print(f'got node from cache! {node_name}')
         except KeyError:
             print(f'could not get node from cache! {node_name}')
-            node = Node(node_name, self.G.nodes(data=True)[node_name])
-            self._node_cache[node_name] = node
+            node_redis_key = node_name + '__node'
+            try:
+                return dill.loads(self.redis.get(node_redis_key))
+            except:
+                node = Node(node_name, self.G.nodes(data=True)[node_name])
+                self._node_cache[node_name] = node
+                self.redis.set(node_redis_key, dill.dumps(node))
         return node
 
     def _valid_neighbors(self, node, reverse=False):

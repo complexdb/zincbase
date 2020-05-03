@@ -15,8 +15,10 @@ fake_lottery_win = kb.store('had_correct_numbers(tom)')
 assert list(kb.query('winner(X)')) == [{'X': 'tom'}]
 kb.delete_rule(fake_lottery_win)
 assert list(kb.query('winner(X)')) == []
-# tom = kb.node('tom')
-# del tom
+
+tom = kb.node('tom')
+del tom
+
 possible_winner_called = 0
 def possible_winner(me, affected_nodes, node_that_changed, attr_changed, cur_val, prev_val):
     global possible_winner_called
@@ -46,12 +48,9 @@ assert kb.node('tom').correct_numbers == 5
 kb.node('tom').correct_numbers = 6
 assert kb.node('tom').correct_numbers == 6
 assert possible_winner_called == 1
-import ipdb; ipdb.set_trace()
-TODO next is the Node class is entirely in-memory still. Need to factor
-it out as a serde redis object, just as successfully done with Rule. It works
-with {} as the node_cache but not with weakref.
 
-#assert full_winner_called == 1
+
+assert full_winner_called == 1
 
 
 print('Rules tests passed!')
