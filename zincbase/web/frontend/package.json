@@ -1,28 +1,27 @@
 {
-    "name": "viz",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "dependencies": {
-      "3d-force-graph": "^1.60.1",
-      "element-class": "^0.2.2",
-      "insert-css": "^2.0.0",
-      "query-string": "^6.11.1",
-      "socket.io": "^2.3.0",
-      "three": "^0.114.0",
-      "three-spritetext": "^1.2.3",
-      "three.fly": "^0.1.6"
-    },
-    "devDependencies": {
-      "browserify": "^16.5.0",
-      "edgelegend": "2.0.0",
-      "tap": "^5.1.1"
-    },
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "build": "browserify index.js > bundle.js"
-    },
-    "author": "",
-    "license": "ISC"
-  }
-  
+  "name": "viz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "3d-force-graph": "1.60.1",
+    "element-class": "0.2.2",
+    "insert-css": "2.0.0",
+    "query-string": "6.11.1",
+    "socket.io": "2.3.0",
+    "three": "0.114.0",
+    "three-spritetext": "1.2.3",
+    "three.fly": "0.1.6"
+  },
+  "devDependencies": {
+    "browserify": "16.5.0",
+    "edgelegend": "2.0.0",
+    "tap": "5.1.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify index.js > bundle.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
