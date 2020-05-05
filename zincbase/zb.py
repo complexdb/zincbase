@@ -37,7 +37,7 @@ from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cl
 class KB():
     """Knowledge Base Class
 
-    >>> kb = KB()
+    >>> kb = KB('localhost', '6379', 2)
     >>> kb.__class__
     <class 'zb.KB'>
     """
@@ -84,7 +84,7 @@ class KB():
 
         :Example:
 
-        >>> KB().seed(555)
+        >>> KB('localhost', '6379', 2).seed(555)
         """
         torch.random.manual_seed(seed)
         np.random.seed(seed)
@@ -110,7 +110,7 @@ class KB():
 
         :Example:
 
-        >>> KB().set_recursion_limit(1e5)
+        >>> KB('localhost', '6379', 2).set_recursion_limit(1e5)
         """
         limit = min(int(recursions), int(5e5))
         sys.setrecursionlimit(max(limit, 3000))
@@ -129,7 +129,7 @@ class KB():
 
         :Example:
         
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.set_propagation_limit(1)
         """
         self._PROPAGATION_LIMIT = propagations
@@ -142,7 +142,7 @@ class KB():
         
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('node_friends(chris, jonny)')
         0
         >>> list(kb.nodes())
@@ -176,7 +176,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('eats(tom, rice)')
         0
         >>> kb.edge('tom', 'eats', 'rice')
@@ -197,7 +197,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('eats(tom, rice)')
         0
         >>> list(kb.edges())
@@ -233,7 +233,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('outfit(X,Y) :- top(X), bottoms(Y)')
         0
         >>> kb.rule(0)
@@ -261,7 +261,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('eats(tom, rice)')
         0
         >>> kb.node('tom')
@@ -300,7 +300,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('knows(tom, shamala)')
         0
         >>> kb.neighbors('tom')
@@ -322,7 +322,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('person(tom)')
         0
         >>> kb.node('tom').cats = 0
@@ -387,7 +387,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.from_csv('./assets/countries_s1_train.csv', delimiter='\\t')
         >>> kb.seed(555)
         >>> kb.build_kg_model(cuda=False, embedding_size=40)
@@ -433,7 +433,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.seed(555)
         >>> kb.from_csv('./assets/countries_s1_train.csv', delimiter='\\t')
         >>> kb.build_kg_model(cuda=False, embedding_size=100)
@@ -748,7 +748,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.from_csv('./assets/countries_s1_train.csv', delimiter='\\t')
         >>> kb.seed(555)
         >>> kb.build_kg_model(cuda=False, embedding_size=100)
@@ -872,7 +872,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('a(a)')
         0
         >>> kb.delete_rule(0)
@@ -919,7 +919,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('is(tom, human)')
         0
         >>> kb.store('has_part(shamala, head)')
@@ -953,7 +953,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('a(a)')
         0
         >>> kb.query('a(X)') #doctest: +ELLIPSIS
@@ -979,7 +979,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('a(a)')
         0
         >>> kb.store('node(x)', node_attributes=[{'node_number': 1}])
@@ -1067,7 +1067,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('a(b, c)')
         0
         >>> kb.to_triples()
@@ -1114,7 +1114,7 @@ class KB():
 
         :Example:
 
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.from_triples([('b', 'a', 'c')])
         >>> len(list(kb.query('a(b, c)')))
         1"""
@@ -1155,7 +1155,7 @@ class KB():
 
         :Example:
         
-        >>> kb = KB()
+        >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.from_csv('./assets/countries_s1_train.csv', delimiter='\\t')
         >>> list(kb.query('locatedin(fiji, Where)'))
         [{'Where': 'melanesia'}, {'Where': 'oceania'}]
