@@ -14,6 +14,11 @@
     "three.fly": "0.1.6"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "@babel/preset-typescript": "^7.9.0",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
     "edgelegend": "2.0.0",
     "rollup": "^2.7.6",
     "rollup-plugin-babel": "^4.4.0",
