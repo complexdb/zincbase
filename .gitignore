@@ -6,3 +6,6 @@ build/
 dist/
 zincbase/web/static/bundle.js
 *.egg-info
+**node_modules/
+.vscode
+**/package-lock.json

@@ -1,15 +1,18 @@
 import context
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.store('a(b,c)')
 kb.node('b')['is_letter'] = 1.0
 assert kb.node('b').attrs == {'is_letter': 1.0}
 assert 'is_letter' in kb.node('b')
 kb.node('b')['is_letter'] = 2.0
+assert kb.node('b').attrs == {'is_letter': 2.0}
 del kb.node('b')['is_letter']
 assert 'is_letter' not in kb.node('b').attrs
 kb.node('b')['is_letter'] = 2.0
+import ipdb; ipdb.set_trace()
 assert kb.node('b').attrs == {'is_letter': 2.0}
 kb.edge('b', 'a', 'c').both_alpha = 1.0
 assert kb.edge('b', 'a', 'c').attrs == {'both_alpha': 1.0}

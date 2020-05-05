@@ -13,8 +13,6 @@ class Node:
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
         super().__setattr__('_dict', data)
-        #nx.set_node_attributes(context.kb.G, {self._name: data})
-        #self._watches = defaultdict(list)
         self._dict['_watches'] = defaultdict(list)
         for watch in watches:
             self._watches[watch[0]].append(watch[1])
@@ -66,6 +64,7 @@ class Node:
         return self.__setattr__(key, value)
     
     def __delitem__(self, key):
+        print('deleteasdasd')
         del self._dict[key]
         me = dill.dumps(self)
         context.kb.redis.set(self._name + '__node', me)

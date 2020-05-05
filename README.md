@@ -66,6 +66,8 @@ server for live updates. Visit `http://localhost:5000/` in your browser
 and you'll see the graph UI. As you build a graph in Python, you can
 visualize it (and changes to it) in realtime through this UI.
 
+Note: requires `pip install zincbase[web]`.
+
 Here are a couple of examples (source code [here](https://github.com/complexdb/zincbase/tree/master/examples/visualization)):
 
 ![Peek 2020-03-21 12-34](https://user-images.githubusercontent.com/2245347/77235135-93e52a80-6b70-11ea-89ca-fe01f83708ff.gif)
