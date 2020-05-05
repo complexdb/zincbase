@@ -5,7 +5,8 @@ from zincbase import __version__
 
 def _parse(filename):
     """Parse a requirements file, including `-r requirements.txt` references"""
-    return [str(r.req) for r in parse_requirements(filename, session=False)]
+    with open('requirements.txt') as f:
+      requirements = f.read().splitlines()
 
 setup(name='zincbase',
       version=__version__,
