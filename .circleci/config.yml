@@ -19,6 +19,7 @@ jobs:
   test:
     docker:
       - image: python:3.7
+      - image: redis
     steps:
       - checkout
       - attach_workspace:
@@ -38,9 +39,9 @@ jobs:
       - run:
           name: Run Tests
           command: |
+            python3 test/test_attr.py
             python3 -m doctest zincbase/zb.py
             python3 -m pytest test/test_web.py
-            python3 test/test_attr.py
             python3 test/test_main.py
             python3 test/test_lists.py
             python3 test/test_graph.py
