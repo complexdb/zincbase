@@ -6,7 +6,8 @@
 import context
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.seed(555)
 
 people = ['john', 'oleg', 'tom', 'vedant', 'akshay', 'todd']

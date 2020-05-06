@@ -1,7 +1,8 @@
 import context
 
 from zincbase import KB
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 
 kb.store('connected(node1, node2)')
 

@@ -4,7 +4,8 @@ import context
 
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.seed(555)
 
 kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
