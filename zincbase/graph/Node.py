@@ -64,7 +64,6 @@ class Node:
         return self.__setattr__(key, value)
     
     def __delitem__(self, key):
-        print('deleteasdasd')
         del self._dict[key]
         me = dill.dumps(self)
         context.kb.redis.set(self._name + '__node', me)
@@ -74,7 +73,7 @@ class Node:
         """Returns attributes of the node stored in the KB
         """
         attributes = self._dict
-        attributes = copy.deepcopy(attributes)
+        #attributes = copy.deepcopy(attributes)
         try:
             del attributes['_watches']
             del attributes['_new_neighbor_fn']

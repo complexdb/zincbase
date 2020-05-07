@@ -84,7 +84,9 @@ node_a.grains = 5
 assert times_called == 7
 assert node_a.grains == 7
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
+
 kb.store('node(node1)', node_attributes=[{'value': 0}])
 kb.store('node(node2)', node_attributes=[{'value': 0}])
 kb.store('node(node3)', node_attributes=[{'value': 0}])
@@ -105,7 +107,9 @@ assert kb.node('node1').value == 2
 kb.node('node2').value == 2
 kb.node('node3').value == 1
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
+
 kb.store('is_linked(a,b)', edge_attributes={'zig': 1})
 edge = kb.edge('a', 'is_linked', 'b')
 node_a = kb.node('a')

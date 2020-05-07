@@ -11,7 +11,8 @@ import context
 
 from zincbase import KB
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.seed(555)
 
 kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
@@ -32,7 +33,8 @@ canada_in_asia_naive = kb.estimate_triple_prob('canada', 'locatedin', 'asia')
 austria_neighbors_spain_naive = kb.estimate_triple_prob('austria', 'neighbor', 'spain')
 austria_neighbors_france_naive = kb.estimate_triple_prob('austria', 'neighbor', 'france')
 
-kb = KB()
+kb = KB('localhost', '6379', 2)
+kb.reset()
 kb.seed(555)
 kb.from_csv('./assets/countries_s1_train.csv', delimiter='\t')
 kb.store('~locatedin(canada, africa)')
