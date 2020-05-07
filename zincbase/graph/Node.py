@@ -9,11 +9,11 @@ from zincbase import context
 class Node:
     """Class representing a node in the KB.
     """
-    def __init__(self, name, data, watches=[]):
+    def __init__(self, name, data={}, watches=[]):
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
+        data.update({'_watches': defaultdict(list)})
         super().__setattr__('_dict', data)
-        self._dict['_watches'] = defaultdict(list)
         for watch in watches:
             self._watches[watch[0]].append(watch[1])
     
@@ -73,7 +73,7 @@ class Node:
         """Returns attributes of the node stored in the KB
         """
         attributes = self._dict
-        #attributes = copy.deepcopy(attributes)
+        attributes = copy.deepcopy(attributes)
         try:
             del attributes['_watches']
             del attributes['_new_neighbor_fn']
