@@ -24,10 +24,12 @@ from tqdm import tqdm
 
 from zincbase.graph.Edge import Edge
 from zincbase.graph.Node import Node
+
+from zincbase.logic.Rule import Rule
 from zincbase.logic.Goal import Goal
 from zincbase.logic.Negative import Negative
 from zincbase.logic.Term import Term
-from zincbase.logic.Rule import Rule
+
 from zincbase.logic.common import unify, process
 from zincbase.nn.dataloader import NegDataset, TrainDataset, BidirectionalOneShotIterator
 from zincbase.nn.rotate import KGEModel
@@ -53,7 +55,7 @@ class KB():
         self._encoded_triples = []
         self._encoded_neg_examples = []
         self._node_cache = weakref.WeakValueDictionary()
-        self._edge_cache = {}
+        self._edge_cache = weakref.WeakValueDictionary() #{}
         self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
         self._knn = None
@@ -1000,6 +1002,7 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
+        import ipdb; ipdb.set_trace()
         rule = Rule(statement)
         rule._redis_key = self.redis.llen('rules')
         length = self.redis.rpush('rules', dill.dumps(rule))
@@ -1013,7 +1016,6 @@ class KB():
         if not bound:
             idx = rule.head.pred + '__rule'
             self.redis.rpush(idx, length)
-
         if edge_attributes:
             if ':-' in statement:
                 raise Exception("""Cannot set edge attributes on a rule, which is unstable. \

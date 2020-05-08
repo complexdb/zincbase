@@ -55,6 +55,8 @@ class Node:
             for rule in self.rules:
                 rule.execute_change(self, key, value, prev_val)
         super().__setattr__('_recursion_depth', self._recursion_depth - 1)
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__node', me)
         context.kb._global_propagations -= 1
 
     def __getitem__(self, key):

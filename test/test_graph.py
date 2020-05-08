@@ -12,7 +12,6 @@ assert kb.node('b').attrs == {'is_letter': 2.0}
 del kb.node('b')['is_letter']
 assert 'is_letter' not in kb.node('b').attrs
 kb.node('b')['is_letter'] = 2.0
-import ipdb; ipdb.set_trace()
 assert kb.node('b').attrs == {'is_letter': 2.0}
 kb.edge('b', 'a', 'c').both_alpha = 1.0
 assert kb.edge('b', 'a', 'c').attrs == {'both_alpha': 1.0}

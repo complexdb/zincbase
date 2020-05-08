@@ -18,6 +18,15 @@ assert tom.grains == 0
 assert tom.i_dont_exist is None
 assert tom['i_dont_exist'] is None
 
+tom.grains = 1
+assert tom['grains'] == 1
+assert tom.grains == 1
+assert 'tom' in kb._node_cache
+del tom
+assert 'tom' not in kb._node_cache
+assert kb.node('tom').grains == 1
+kb.node('tom').grains = 0
+
 kb.node('shamala').grains = 4
 shamala = kb.node('shamala')
 assert 'grains' in shamala

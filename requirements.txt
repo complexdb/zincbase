@@ -2,7 +2,7 @@ dill
 matplotlib
 networkx
 numpy
-redis
+redis==3.4.1
 scipy
 sklearn
 torch
