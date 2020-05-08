@@ -1002,7 +1002,6 @@ class KB():
                 self._entity2id[triple[2]] = len(self._entity2id)
             self._neg_examples.append(Negative(statement[1:]))
             return '~' + str(len(self._neg_examples) - 1)
-        import ipdb; ipdb.set_trace()
         rule = Rule(statement)
         rule._redis_key = self.redis.llen('rules')
         length = self.redis.rpush('rules', dill.dumps(rule))
