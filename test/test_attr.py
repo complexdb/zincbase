@@ -136,7 +136,7 @@ assert 'zig' in mali[0]
 assert '_watches' not in mali[0]
 
 edges = list(kb.edges())
-assert len(edges) == 1111
+assert len(edges) == 1110
 edges = list(kb.edges(lambda x: x.nodes[0] == 'mali'))
 assert len(edges) == 8
 kb.store('itisin(mali, western_africa)', edge_attributes={'def_want_visit': True})

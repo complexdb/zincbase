@@ -13,9 +13,9 @@ class Node:
         super().__setattr__('_name', name)
         super().__setattr__('_recursion_depth', 0)
         data.update({'_watches': defaultdict(list)})
-        super().__setattr__('_dict', data)
         for watch in watches:
-            self._watches[watch[0]].append(watch[1])
+            data['_watches'][watch[0]].append(watch[1])
+        super().__setattr__('_dict', data)
     
     def __repr__(self):
         return self._name
@@ -160,7 +160,7 @@ class Node:
             self._dict['_watches'][attribute].append(fn)
             me = dill.dumps(self)
             context.kb.redis.set(self._name + '__node', me)
-        return (attribute, len(self._watches) - 1)
+        return (attribute, len(self._dict['_watches']) - 1)
     
     def remove_watch(self, attribute_or_watch_id):
         """Stop watching `attribute_or_watch_id`.
@@ -168,9 +168,11 @@ class Node:
         If it is a tuple of (attribute, watch_id): delete that specific watch.
         """
         if isinstance(attribute_or_watch_id, tuple):
-            self._watches[attribute_or_watch_id[0]].pop(attribute_or_watch_id[1])
+            self._dict['_watches'][attribute_or_watch_id[0]].pop(attribute_or_watch_id[1])
         else:
-            self._watches[attribute_or_watch_id] = []
+            self._dict['_watches'][attribute_or_watch_id] = []
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__node', me)
     
     def watch_for_new_neighbor(self, fn):
         """Execute `fn` when node receives a new neighbor."""

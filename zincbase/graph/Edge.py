@@ -1,6 +1,7 @@
 from collections import defaultdict
 import copy
 
+import dill
 import networkx as nx
 
 from zincbase import context
@@ -9,15 +10,16 @@ class Edge:
     """Class representing an edge in the KB.
     """
     def __init__(self, sub, pred, ob, data={}, watches=[]):
-        super().__setattr__('_name', str(sub) + '___' + str(pred) + '___' + str(ob))
+        super().__setattr__('_name', str(sub) + '__' + str(pred) + '__' + str(ob))
         super().__setattr__('_sub', str(sub))
         super().__setattr__('_pred', str(pred))
         super().__setattr__('_ob', str(ob))
         super().__setattr__('_recursion_depth', 0)
-        super().__setattr__('_watches', defaultdict(list))
-        super().__setattr__('_edge', context.kb.G[self._sub][self._ob])
+        #super().__setattr__('_edge', context.kb.G[self._sub][self._ob])
+        data.update({'_watches': defaultdict(list)})
         for watch in watches:
-            self._watches[watch[0]].append(watch[1])
+            data['_watches'][watch[0]].append(watch[1])
+        super().__setattr__('_dict', data)
     
     def __repr__(self):
         return self._name
@@ -34,9 +36,11 @@ class Edge:
 
     def __getattr__(self, key):
         try:
-            for _, edge in self._edge.items():
-                if edge['pred'] == self._pred:
-                    return edge[key]
+            if key in ('__getstate__', '__deepcopy__', '__setstate__'):
+                raise AttributeError
+            if key == 'pred':
+                return self._pred
+            return self._dict.get(key, None)
         except KeyError as e:
             return None
 
@@ -47,15 +51,22 @@ class Edge:
             return False
         context.kb._global_propagations += 1
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
-        for _, attrs in self._edge.items():
-            if attrs['pred'] == self._pred:
-                prev_val = attrs.get(key, None)
-                attrs.update({key: value})
-                if not context.kb._dont_propagate:
-                    for watch_fn in self._watches.get(key, []):
-                        watch_fn(self, prev_val)
-                super().__setattr__('_recursion_depth', self._recursion_depth - 1)
-                context.kb._global_propagations -= 1
+        prev_val = self._dict.get(key, None)
+        self._dict.update({key: value})
+
+        # TODO I am here, trying to factor OUT networkx and set the edge
+        # properties just on the edge itself, using self._dict as with Node.py
+        # Hopefully there are no unforseen consequences...this may break
+        # anything in zb.py that uses self.G or anywhere kb.G
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__edge', me)
+        if not context.kb._dont_propagate:
+            for watch_fn in self._dict['_watches'].get(key, []):
+                watch_fn(self, prev_val)
+        super().__setattr__('_recursion_depth', self._recursion_depth - 1)
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__edge', me)
+        context.kb._global_propagations -= 1
 
     def __getitem__(self, key):
         return self.__getattr__(key)
@@ -64,9 +75,7 @@ class Edge:
         return self.__setattr__(key, value)
     
     def __delitem__(self, attr):
-        for _, attrs in self._edge.items():
-            if attrs['pred'] == self._pred:
-                del attrs[attr]
+        del self._dict[attr]
     
     def get(self, attr, default):
         try:
@@ -84,15 +93,11 @@ class Edge:
     def attrs(self):
         """Returns attributes of the edge stored in the KB
         """
-        attributes = None
-        for _, edge in self._edge.items():
-            if edge['pred'] == self._pred:
-                attributes = copy.deepcopy(edge)
-        if attributes is None:
-            return False
+        attributes = self._dict
+        attributes = copy.deepcopy(attributes)
         try:
-            del attributes['pred']
             del attributes['_watches']
+            del attributes['pred']
         except:
             pass
         return attributes
@@ -127,8 +132,11 @@ class Edge:
         resistance changed to 4
 
         """
-        self._watches[attribute].append(fn)
-        return (attribute, len(self._watches) - 1)
+        with context.kb.dont_propagate():
+            self._dict['_watches'][attribute].append(fn)
+            me = dill.dumps(self)
+            context.kb.redis.set(self._name + '__edge', me)
+        return (attribute, len(self._dict['_watches']) - 1)
     
     def remove_watch(self, attribute_or_watch_id):
         """Stop watching `attribute_or_watch_id`.
@@ -136,6 +144,8 @@ class Edge:
         If it is a tuple of (attribute, watch_id): delete that specific watch.
         """
         if isinstance(attribute_or_watch_id, tuple):
-            self._watches[attribute_or_watch_id[0]].pop(attribute_or_watch_id[1])
+            self._dict['_watches'][attribute_or_watch_id[0]].pop(attribute_or_watch_id[1])
         else:
-            self._watches[attribute_or_watch_id] = []
+            self._dict['_watches'][attribute_or_watch_id] = []
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__edge', me)

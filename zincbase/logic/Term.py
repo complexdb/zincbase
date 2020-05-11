@@ -35,6 +35,7 @@ class Term:
             if arg:
                 str_arg = str(arg)
                 added_node_1 = False
+                # TODO what is all this kb.G !!! 
                 if not context.kb.G.has_node(str_arg):
                     context.kb.G.add_node(str_arg)
                     added_node_1 = True
@@ -43,7 +44,8 @@ class Term:
                     if not context.kb.G.has_node(str(arg2)):
                         context.kb.G.add_node(str(arg2))
                         added_node_2 = True
-                    context.kb.G.add_edge(str_arg, str(arg2), pred=self.pred)
+                    #context.kb.G.add_edge(str_arg, str(arg2), pred=self.pred)
+                    context.kb.edge(str_arg, self.pred, str(arg2))
                     if added_node_1:
                         node = context.kb.node(str(arg2))
                         try:

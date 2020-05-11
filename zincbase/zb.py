@@ -187,11 +187,17 @@ class KB():
         >>> kb.edge('tom', 'eats', 'rice').alot
         1
         """
+        edge_name = str(sub) + '__' + str(pred) + '__' + str(ob)
         try:
-            edge = self._edge_cache[(sub, pred, ob)]
+            edge = self._edge_cache[edge_name]
         except KeyError:
-            edge = Edge(sub, pred, ob)
-            self._edge_cache[(sub, pred, ob)] = edge
+            edge_redis_key = edge_name + '__edge'
+            try:
+                edge = dill.loads(self.redis.get(edge_redis_key))
+            except:
+                edge = Edge(sub, pred, ob)
+                self.redis.set(edge_redis_key, dill.dumps(edge))
+            self._edge_cache[edge_name] = edge
         return edge
     
     def edges(self, filter_fn=None):
@@ -210,9 +216,10 @@ class KB():
         >>> list(kb.edges(lambda x: x.alot == 'every_day_almost'))
         [tom___eats___rice]
         """
-        edges = self.G.edges(data=True)
+        edges = self.redis.keys('*__edge')
         for edge in edges:
-            edge = self.edge(edge[0], edge[-1]['pred'], edge[1])
+            edge = self.redis.get(edge)
+            edge = dill.loads(edge)
             if filter_fn:
                 if filter_fn(edge):
                     yield edge
@@ -287,12 +294,20 @@ class KB():
         return node
 
     def _valid_neighbors(self, node, reverse=False):
-        if reverse:
-            graph = self.G.reverse()
-        else:
-            graph = self.G
-        neighbors = graph[node]
-        return [x for x in neighbors.items()]
+        # if reverse:
+        #     graph = self.G.reverse()
+        # else:
+        #     graph = self.G
+        #neighbors = graph[node]
+        neighbors = self.redis.keys(str(node) + '__*__edge')
+        result = defaultdict(list)
+        for n in neighbors:
+            neigh = self.redis.get(n)
+            neighb = dill.loads(neigh)
+            result[neighb._ob].append(neighb._pred)
+        return [(k, [{'pred': vv} for vv in v]) for k, v in result.items()]
+        # import ipdb; ipdb.set_trace()
+        # return [x for x in neighbors.items()]
     
     def neighbors(self, node):
         """Return neighbors of node and predicates that connect them.
@@ -308,14 +323,8 @@ class KB():
         >>> kb.neighbors('tom')
         [('shamala', [{'pred': 'knows'}])]"""
         neighbors = self._valid_neighbors(node)
-        l = []
-        for n in neighbors:
-            how = []
-            for rel in n[1]:
-                how.append(n[1][rel])
-            l.append((n[0], how))
-        return l
-    
+        return neighbors
+        
     def filter(self, filter_condition, candidate_nodes=None):
         """Filter (ie query) nodes by attributes.
 
@@ -1022,9 +1031,9 @@ class KB():
                 """)
             parts = split_to_parts(statement)
             if parts[2] is not None:
-                for idx, edge in self.G[parts[0]][parts[2]].items():
-                    if edge['pred'] == parts[1]:
-                        nx.set_edge_attributes(self.G, {(parts[0], parts[2], idx): edge_attributes})
+                # TODO why update 1 by 1. Edge class needs a bulk-update _dict
+                for k, v in edge_attributes.items():
+                    self.edge(parts[0], parts[1], parts[2])[k] = v
         if node_attributes:
             parts = split_to_parts(statement)
             self.node(parts[0]).update(node_attributes[0])
