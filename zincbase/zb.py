@@ -182,7 +182,7 @@ class KB():
         >>> kb.store('eats(tom, rice)')
         0
         >>> kb.edge('tom', 'eats', 'rice')
-        tom___eats___rice
+        tom__eats__rice
         >>> kb.edge('tom', 'eats', 'rice').alot = 1
         >>> kb.edge('tom', 'eats', 'rice').alot
         1
@@ -209,12 +209,12 @@ class KB():
         >>> kb.store('eats(tom, rice)')
         0
         >>> list(kb.edges())
-        [tom___eats___rice]
+        [tom__eats__rice]
         >>> list(kb.edges(lambda x: x.nodes[0] == 'tom'))
-        [tom___eats___rice]
+        [tom__eats__rice]
         >>> kb.edge('tom', 'eats', 'rice').alot = 'every_day_almost'
         >>> list(kb.edges(lambda x: x.alot == 'every_day_almost'))
-        [tom___eats___rice]
+        [tom__eats__rice]
         """
         edges = self.redis.keys('*__edge')
         for edge in edges:
