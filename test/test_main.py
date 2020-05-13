@@ -15,8 +15,8 @@ b = kb.store('c(y)'); assert b == 1
 b = kb.query('c(X)'); b = list(b); assert len(b) == 2; assert b[0]['X'] in ('x', 'y');
 assert b[1]['X'] in ('x', 'y'); assert b[0]['X'] != b[1]['X']; assert kb.node(b[0]['X']).attrs == {}
 assert kb.node(b[1]['X']).attrs == {}
-b = kb.store('loves(tom, shamala)'); assert 'tom' in kb.G; assert 'shamala' in kb.G
-assert kb.G['tom']['shamala'][0]['pred'] == 'loves'
+b = kb.store('loves(tom, shamala)'); #assert 'tom' in kb.G; assert 'shamala' in kb.G
+# assert kb.G['tom']['shamala'][0]['pred'] == 'loves'
 b = kb.query('loves(X, Y)'); b = list(b); assert len(b) == 1; assert b[0]['X'] == 'tom'; assert b[0]['Y'] == 'shamala'
 b = kb.query('loves( X,Y)'); b = list(b); assert len(b) == 1; assert b[0]['X'] == 'tom'; assert b[0]['Y'] == 'shamala'
 b = kb.query('loves(X, foo)'); b = list(b); assert not b

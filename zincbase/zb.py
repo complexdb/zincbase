@@ -299,20 +299,19 @@ class KB():
         return node
 
     def _valid_neighbors(self, node, reverse=False):
-        # if reverse:
-        #     graph = self.G.reverse()
-        # else:
-        #     graph = self.G
-        #neighbors = graph[node]
-        neighbors = self.redis.keys(str(node) + '__*__edge')
+        if reverse:
+            neighbors = self.redis.keys('*__' + str(node) + '__edge')
+        else:
+            neighbors = self.redis.keys(str(node) + '__*__edge')
         result = defaultdict(list)
         for n in neighbors:
             neigh = self.redis.get(n)
             neighb = dill.loads(neigh)
-            result[neighb._ob].append(neighb._pred)
+            if reverse:
+                result[neighb._sub].append(neighb._pred)
+            else:
+                result[neighb._ob].append(neighb._pred)
         return [(k, [{'pred': vv} for vv in v]) for k, v in result.items()]
-        # import ipdb; ipdb.set_trace()
-        # return [x for x in neighbors.items()]
     
     def neighbors(self, node):
         """Return neighbors of node and predicates that connect them.
@@ -355,7 +354,6 @@ class KB():
                 # maybe node doesn't have the attr set
                 pass
 
-
     def bfs(self, start_node, target_node, max_depth=10, reverse=False):
         """Find a path from start_node to target_node"""
         stack = [(start_node, 0, [])]
@@ -367,10 +365,10 @@ class KB():
             for n, pred in self._valid_neighbors(node, reverse=reverse):
                 if n == target_node:
                     for final_edge in pred:
-                        yield path + [(pred[final_edge]['pred'], n)]
+                        yield path + [(final_edge['pred'], n)]
                 else:
                     for edge in pred:
-                        stack.append((n, depth+1, path + [(pred[edge]['pred'], n)]))
+                        stack.append((n, depth+1, path + [(edge['pred'], n)]))
         return answers
 
     def add_node_to_trained_kg(self, sub, pred, ob):
@@ -871,10 +869,6 @@ class KB():
                     self._node_cache[f'rules{i}'] = rule
                 else:
                     rule = self._node_cache[f'rules{i}']
-                # optimize below line: index by arity
-                # if len(rule.head.args) != len(term.args):
-                #     print('continuing cos not equal', rule.head.args, term.args)
-                #     continue
                 child = Goal(rule, c)
                 ans = unify(term, c.bindings, rule.head, child.bindings)
                 if ans:
