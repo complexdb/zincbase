@@ -44,7 +44,6 @@ class KB():
     <class 'zb.KB'>
     """
     def __init__(self, host, port, db):
-        self.G = nx.MultiDiGraph()
         self._dont_propagate = False
         self._MAX_RECURSION = 1
         self._PROPAGATION_LIMIT = math.inf
@@ -55,7 +54,7 @@ class KB():
         self._encoded_triples = []
         self._encoded_neg_examples = []
         self._node_cache = weakref.WeakValueDictionary()
-        self._edge_cache = weakref.WeakValueDictionary() #{}
+        self._edge_cache = weakref.WeakValueDictionary()
         self._variable_rules = [] # Anything with :- in it.
         self._kg_model = None
         self._knn = None
@@ -160,9 +159,11 @@ class KB():
         True
         
         """
-        nodes = self.G.nodes(data=True)
-        for node_name, node_attrs in nodes:
-            node = self.node(node_name)
+        nodes = self.redis.keys('*__node')
+        for node_name in nodes:
+            node = self.redis.get(node_name)
+            node = dill.loads(node)
+            self._node_cache[str(node)] = node
             if filter_fn:
                 if filter_fn(node):
                     yield node
@@ -267,6 +268,16 @@ class KB():
                 return dill.loads(self.redis.lrange('rules', rule_num, rule_num)[0])
 
 
+    def has_node(self, node_name):
+        node_name = str(node_name)
+        try:
+            node = self._node_cache[node_name]
+            return True
+        except KeyError:
+            node_redis_key = node_name + '__node'
+            has = self.redis.keys(node_redis_key)
+            return len(has) > 0
+
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.
 
@@ -293,7 +304,7 @@ class KB():
             try:
                 node = dill.loads(self.redis.get(node_redis_key))
             except:
-                node = Node(node_name, self.G.nodes(data=True)[node_name])
+                node = Node(node_name, {})
                 self.redis.set(node_redis_key, dill.dumps(node))
             self._node_cache[node_name] = node
         return node
@@ -344,9 +355,14 @@ class KB():
         >>> list(kb.filter(lambda x: x['cats'] < 1))
         [tom]"""
         if candidate_nodes is None:
-            candidate_nodes = self.G.nodes
+            candidate_nodes = self.redis.keys('*__node')
         for node in candidate_nodes:
-            node = self.node(node)
+            if isinstance(node, bytes):
+                node = self.redis.get(node)
+                node = dill.loads(node)
+                self._node_cache[str(node)] = node
+            elif isinstance(node, str):
+                node = self.node(node)
             try:
                 if filter_condition(node):
                     yield node
@@ -964,11 +980,11 @@ class KB():
         :Example:
 
         >>> kb = KB('localhost', '6379', 2); kb.reset()
-        >>> kb.store('a(a)')
+        >>> kb.store('ab(a)')
         0
-        >>> kb.query('a(X)') #doctest: +ELLIPSIS
+        >>> kb.query('ab(X)') #doctest: +ELLIPSIS
         <generator object KB._search at 0x...>
-        >>> list(kb.query('a(X)'))
+        >>> list(kb.query('ab(X)'))
         [{'X': 'a'}]"""
         return self._search(Term(strip_all_whitespace(statement)))
 

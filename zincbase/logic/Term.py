@@ -35,26 +35,22 @@ class Term:
             if arg:
                 str_arg = str(arg)
                 added_node_1 = False
-                # TODO what is all this kb.G !!! 
-                if not context.kb.G.has_node(str_arg):
-                    context.kb.G.add_node(str_arg)
-                    added_node_1 = True
+                if not context.kb.has_node(str_arg):
+                    added_node_1 = context.kb.node(str_arg)
                 for arg2 in self.args[i+1:]:
                     added_node_2 = False
-                    if not context.kb.G.has_node(str(arg2)):
-                        context.kb.G.add_node(str(arg2))
-                        added_node_2 = True
-                    #context.kb.G.add_edge(str_arg, str(arg2), pred=self.pred)
+                    if not context.kb.has_node(str(arg2)):
+                        added_node_2 = context.kb.node(str(arg2))
                     context.kb.edge(str_arg, self.pred, str(arg2))
                     if added_node_1:
-                        node = context.kb.node(str(arg2))
+                        node = added_node_2
                         try:
                             if not context.kb._dont_propagate:
                                 node._new_neighbor_fn(str(arg))
                         except Exception as e:
                             pass
                     if added_node_2:
-                        node = context.kb.node(str_arg)
+                        node = added_node_1
                         try:
                             if not context.kb._dont_propagate:
                                 node._new_neighbor_fn(str(arg2))
