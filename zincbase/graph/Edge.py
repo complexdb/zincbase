@@ -15,7 +15,6 @@ class Edge:
         super().__setattr__('_pred', str(pred))
         super().__setattr__('_ob', str(ob))
         super().__setattr__('_recursion_depth', 0)
-        #super().__setattr__('_edge', context.kb.G[self._sub][self._ob])
         data.update({'_watches': defaultdict(list)})
         for watch in watches:
             data['_watches'][watch[0]].append(watch[1])
@@ -53,11 +52,6 @@ class Edge:
         super().__setattr__('_recursion_depth', self._recursion_depth + 1)
         prev_val = self._dict.get(key, None)
         self._dict.update({key: value})
-
-        # TODO I am here, trying to factor OUT networkx and set the edge
-        # properties just on the edge itself, using self._dict as with Node.py
-        # Hopefully there are no unforseen consequences...this may break
-        # anything in zb.py that uses self.G or anywhere kb.G
         me = dill.dumps(self)
         context.kb.redis.set(self._name + '__edge', me)
         if not context.kb._dont_propagate:
@@ -76,6 +70,8 @@ class Edge:
     
     def __delitem__(self, attr):
         del self._dict[attr]
+        me = dill.dumps(self)
+        context.kb.redis.set(self._name + '__edge', me)
     
     def get(self, attr, default):
         try:

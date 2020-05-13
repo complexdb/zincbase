@@ -191,6 +191,11 @@ class KB():
         try:
             edge = self._edge_cache[edge_name]
         except KeyError:
+            try:
+                assert self.node(sub)
+                assert self.node(ob)
+            except:
+                raise
             edge_redis_key = edge_name + '__edge'
             try:
                 edge = dill.loads(self.redis.get(edge_redis_key))

@@ -57,7 +57,7 @@ assert edge['both_alpha'] == 2.0
 
 kb.store('edge(a,b)')
 edge = kb.edge('a', 'edge', 'b')
-assert str(edge) == 'a___edge___b'
+assert str(edge) == 'a__edge__b'
 assert edge.pred == 'edge'
 assert edge.nodes == ['a', 'b']
 edge.resistance = 3
