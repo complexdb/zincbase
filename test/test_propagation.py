@@ -15,7 +15,6 @@ def hello_neighbor(new_neighbor):
     assert new_neighbor == 'node3'
 
 node1.watch_for_new_neighbor(hello_neighbor)
-
 kb.store('connected(node1, node3)')
 assert was_called
 

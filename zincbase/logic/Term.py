@@ -43,14 +43,14 @@ class Term:
                         added_node_2 = context.kb.node(str(arg2))
                     context.kb.edge(str_arg, self.pred, str(arg2))
                     if added_node_1:
-                        node = added_node_2
+                        node = added_node_2 or context.kb.node(str(arg2))
                         try:
                             if not context.kb._dont_propagate:
                                 node._new_neighbor_fn(str(arg))
                         except Exception as e:
                             pass
                     if added_node_2:
-                        node = added_node_1
+                        node = added_node_1 or context.kb.node(str_arg)
                         try:
                             if not context.kb._dont_propagate:
                                 node._new_neighbor_fn(str(arg2))
