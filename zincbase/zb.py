@@ -146,7 +146,7 @@ class KB():
         >>> kb = KB('localhost', '6379', 2); kb.reset()
         >>> kb.store('node_friends(chris, jonny)')
         0
-        >>> list(kb.nodes())
+        >>> sorted(list(kb.nodes()))
         [chris, jonny]
         >>> chris_node = list(kb.nodes(lambda x: x == 'chris'))
         >>> len(chris_node)
