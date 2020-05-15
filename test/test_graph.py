@@ -78,10 +78,4 @@ del edge['resistance']
 assert 'resistance' not in edge.attrs
 assert 'resistance' not in edge
 
-try:
-    kb.edge('hello', 'i', 'no_exist')
-    assert False
-except KeyError:
-    assert True
-
 print('All graph tests passed.')

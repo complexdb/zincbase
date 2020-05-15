@@ -154,7 +154,8 @@ class GraphCaster:
 
     def from_kb(self, kb):
         # TODO Permit this to work with subsampling the KB
-        for node in kb.G.nodes:
-            self.add_node(kb.node(node))
-        for from_node, to_node, edge_attributes in kb.G.edges.data():
+        for node in kb.nodes():
+            self.add_node(node)
+        for edge in kb.edges():
+            from_node, to_node, edge_attributes = edge._sub, edge._ob, edge.attrs
             self.add_edge(from_node=from_node, to_node=to_node, attributes=edge_attributes)
