@@ -926,12 +926,18 @@ class KB():
 
         :param float density: Probability (0-1) that a given edge will be plotted, \
         useful to thin out dense graphs for visualization."""
-        edgelist = [e for e in self.G.edges(data=True) if random.random() < density]
-        newg = nx.DiGraph(edgelist)
+        edgelist = list(self.edges(lambda x: random.random() < density))
+        edgelist2 = []
+        for edge in edgelist:
+            edgelist2.append((edge._sub, edge._ob, {'pred': edge._pred}))
+        newg = nx.DiGraph(edgelist2)
         pos = nx.spring_layout(newg)
         plt.figure(1,figsize=(12,12))
         nx.draw_networkx_nodes(newg, pos, node_size=200)
-        nx.draw_networkx_edges(newg, pos, edgelist=edgelist, width=1, font_size=8)
+        edgelist3 = []
+        for edge in edgelist:
+            edgelist3.append((edge._sub, edge._ob))
+        nx.draw_networkx_edges(newg, pos, edgelist=edgelist3, width=1, font_size=8)
         nx.draw_networkx_labels(newg, pos, font_size=10, font_family='sans-serif')
         nx.draw_networkx_edge_labels(newg, pos)
         plt.axis('off')
