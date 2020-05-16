@@ -275,8 +275,8 @@ class KB():
             return True
         except KeyError:
             node_redis_key = node_name + '__node'
-            has = self.redis.keys(node_redis_key)
-            return len(has) > 0
+            has = self.redis.sismember('node_set', node_redis_key)
+            return has == 1
 
     def node(self, node_name):
         """Get a node, and its attributes, from the graph.
@@ -306,6 +306,7 @@ class KB():
             except:
                 node = Node(node_name, {})
                 self.redis.set(node_redis_key, dill.dumps(node))
+                self.redis.sadd('node_set', node_redis_key)
             self._node_cache[node_name] = node
         return node
 
