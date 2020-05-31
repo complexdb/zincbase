@@ -31,7 +31,9 @@ from zincbase.logic.Negative import Negative
 from zincbase.logic.Term import Term
 
 from zincbase.logic.common import unify, process
-from zincbase.nn.dataloader import NegDataset, TrainDataset, BidirectionalOneShotIterator
+from zincbase.nn.dataloader import (NegDataset, 
+                TrainDataset, BidirectionalIterator,
+                RedisGraph)
 from zincbase.nn.rotate import KGEModel
 from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cleanse
       
@@ -51,6 +53,8 @@ class KB():
         self._neg_examples = []
         self._entity2id = {}
         self._relation2id = {}
+        self._seen_nodes = 0
+        self._seen_relations = 0
         self._encoded_triples = []
         self._encoded_neg_examples = []
         self._node_cache = weakref.WeakValueDictionary()
@@ -203,6 +207,8 @@ class KB():
             except:
                 edge = Edge(sub, pred, ob)
                 self.redis.set(edge_redis_key, dill.dumps(edge))
+                # this set keeps count of unique preds
+                self.redis.sadd('edge_set', str(pred))
             self._edge_cache[edge_name] = edge
         return edge
     
@@ -573,42 +579,36 @@ class KB():
         self._pred_loss_to_graph_loss = pred_loss_to_graph_loss
         self._node_attributes = node_attributes
         self._pred_attributes = pred_attributes
+        self._seen_nodes = 0
+        self._seen_relations = 0
 
-        triples = self.to_triples(data=True)
-        for i, triple in enumerate(triples):
-            if triple[0] not in self._entity2id:
-                self._entity2id[triple[0]] = len(self._entity2id)
-        for i, triple in enumerate(triples):
-            if triple[1] not in self._relation2id:
-                self._relation2id[triple[1]] = len(self._relation2id)
-        curlen = len(self._entity2id)
-        j = 0
-        for i, triple in enumerate(triples):
-            if triple[2] not in self._entity2id:
-                self._entity2id[triple[2]] = curlen + j
-                j += 1
-        self._encoded_triples = []
-        for triple in triples:
-            # TODO: attribute must be a float; for a dictionary encoding of them (for categoricals)
-            attrs = []
-            for attribute in node_attributes:
-                attr = float(triple[3].get(attribute, 0.0))
-                attrs.append(attr)
-            for pred_attr in pred_attributes:
-                if pred_attr == 'truthiness':
-                    default_value = 1.
-                else:
-                    default_value = 0.
-                attr = float(triple[4].get(pred_attr, default_value))
-                attrs.append(attr)
-            if len(triple) == 7 and triple[6]:
-                true = 1. # it's a false fact; negative example TODO rename from 'true'!
-            else:
-                true = 0.
-            self._encoded_triples.append((self._entity2id[triple[0]], self._relation2id[triple[1]], self._entity2id[triple[2]],
-                                        attrs, true))
-        for neg_example in self._neg_examples:
-            self._encoded_neg_examples.append((self._entity2id[neg_example.head], self._relation2id[neg_example.pred], self._entity2id[neg_example.tail]))
+        dataloader = RedisGraph(self, node_attributes, pred_attributes)
+
+        # self._encoded_triples = []
+        # for triple in triples:
+        #     # TODO: attribute must be a float; for a dictionary encoding of them (for categoricals)
+        #     attrs = []
+        #     for attribute in node_attributes:
+        #         attr = float(triple[3].get(attribute, 0.0))
+        #         attrs.append(attr)
+        #     for pred_attr in pred_attributes:
+        #         if pred_attr == 'truthiness':
+        #             default_value = 1.
+        #         else:
+        #             default_value = 0.
+        #         attr = float(triple[4].get(pred_attr, default_value))
+        #         attrs.append(attr)
+        #     if len(triple) == 7 and triple[6]:
+        #         true = 1. # it's a false fact; negative example TODO rename from 'true'!
+        #     else:
+        #         true = 0.
+        #     self._encoded_triples.append((self._entity2id[triple[0]], self._relation2id[triple[1]], self._entity2id[triple[2]],
+        #                                 attrs, true))
+
+        # TODO
+        # for neg_example in self._neg_examples:
+        #     self._encoded_neg_examples.append((self._entity2id[neg_example.head], self._relation2id[neg_example.pred], self._entity2id[neg_example.tail]))
+        
         dee = False; dre = False
         if model_name == 'ComplEx':
             dee = True
@@ -621,8 +621,8 @@ class KB():
         else:
             device = 'cpu'
         self._kg_model = KGEModel(model_name=model_name,
-                             nentity=len(self._entity2id),
-                             nrelation=len(self._relation2id),
+                             nentity=dataloader.node_count,
+                             nrelation=dataloader.relation_count,
                              hidden_dim=embedding_size,
                              gamma=gamma,
                              double_entity_embedding=dee,
@@ -655,34 +655,42 @@ class KB():
             for triple in triples:
                 self._encoded_triples.append((self._entity2id[triple[0]], self._relation2id[triple[1]], self._entity2id[triple[2]]))
 
-        nentity = len(self._entity2id)
-        nrelation = len(self._relation2id)
-        train_dataloader_head = DataLoader(
-            TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'head-batch'),
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=1,
-            collate_fn=TrainDataset.collate_fn)
-        train_dataloader_tail = DataLoader(
-            TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'tail-batch'),
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=1,
-            collate_fn=TrainDataset.collate_fn)
-        if len(self._neg_examples):
-            neg_dataloader = DataLoader(
-                NegDataset(self._encoded_neg_examples),
-                batch_size=batch_size,
-                shuffle=True,
-                num_workers=1,
-                collate_fn=TrainDataset.collate_fn)
-            neg_ratio = int(neg_ratio * (len(self._encoded_triples) / len(self._neg_examples)))
-            neg_ratio = max(neg_ratio, 1e-4)
-            train_iterator = BidirectionalOneShotIterator(train_dataloader_head, train_dataloader_tail, neg_dataloader, neg_ratio)
-        else:
-            train_iterator = BidirectionalOneShotIterator(train_dataloader_head, train_dataloader_tail)
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self._kg_model.parameters()), lr=lr)
+        nentity = self._kg_model.nentity
+        nrelation = self._kg_model.nrelation
+        # import ipdb; ipdb.set_trace()
+        # train_dataloader_head = DataLoader(
+        #     TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'head-batch'),
+        #     batch_size=batch_size,
+        #     shuffle=True,
+        #     num_workers=1,
+        #     collate_fn=TrainDataset.collate_fn)
+        # train_dataloader_tail = DataLoader(
+        #     TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'tail-batch'),
+        #     batch_size=batch_size,
+        #     shuffle=True,
+        #     num_workers=1,
+        #     collate_fn=TrainDataset.collate_fn)
+        head_graph = RedisGraph(self, 'head-batch', negative_sample_size=neg_to_pos)
+        train_dataloader_head = DataLoader(head_graph,
+            batch_size=batch_size, shuffle=True, num_workers=1, collate_fn=RedisGraph.collate_fn)
+        train_dataloader_tail = DataLoader(RedisGraph(self, 'tail-batch', negative_sample_size=neg_to_pos),
+            batch_size=batch_size, shuffle=True, num_workers=1, collate_fn=RedisGraph.collate_fn)
 
+        if False: #len(self._neg_examples):
+            pass
+            # neg_dataloader = DataLoader(
+            #     NegDataset(self._encoded_neg_examples),
+            #     batch_size=batch_size,
+            #     shuffle=True,
+            #     num_workers=1,
+            #     collate_fn=TrainDataset.collate_fn)
+            # neg_ratio = int(neg_ratio * (len(self._encoded_triples) / len(self._neg_examples)))
+            # neg_ratio = max(neg_ratio, 1e-4)
+            # train_iterator = BidirectionalIterator(train_dataloader_head, train_dataloader_tail, neg_dataloader, neg_ratio)
+        else:
+            train_iterator = BidirectionalIterator(train_dataloader_head, train_dataloader_tail)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self._kg_model.parameters()), lr=lr)
+        
         self._kg_model.train()
         if verbose:
             it = tqdm(range(0, steps))
@@ -1020,19 +1028,9 @@ class KB():
         >>> list(kb.query('node(What)'))
         [{'What': 'x'}]"""
         statement = strip_all_whitespace(statement)
-        if 'truthiness' in edge_attributes and edge_attributes['truthiness'] < 0:
-            if statement[0] != '~':
-                statement = '~' + statement
-        if statement[0] == '~':
-            triple = split_to_parts(statement[1:])
-            if not triple[0] in self._entity2id:
-                self._entity2id[triple[0]] = len(self._entity2id)
-            if not triple[1] in self._relation2id:
-                self._relation2id[triple[1]] = len(self._relation2id)
-            if not triple[2] in self._entity2id:
-                self._entity2id[triple[2]] = len(self._entity2id)
-            self._neg_examples.append(Negative(statement[1:]))
-            return '~' + str(len(self._neg_examples) - 1)
+        if statement[0] == '~' and 'truthiness' not in edge_attributes:
+            statement = statement[1:]
+            edge_attributes['truthiness'] = -1
         rule = Rule(statement)
         rule._redis_key = self.redis.llen('rules')
         length = self.redis.rpush('rules', dill.dumps(rule))

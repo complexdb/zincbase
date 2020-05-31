@@ -16,7 +16,7 @@ class Node:
         for watch in watches:
             data['_watches'][watch[0]].append(watch[1])
         super().__setattr__('_dict', data)
-    
+
     def __repr__(self):
         return self._name
     

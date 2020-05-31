@@ -1,6 +1,6 @@
+import dill
 import numpy as np
 import torch
-
 from torch.utils.data import Dataset
 
 class NegDataset(Dataset):
@@ -135,7 +135,7 @@ class TrainDataset(Dataset):
 
         return true_head, true_tail
 
-class BidirectionalOneShotIterator(object):
+class BidirectionalIterator(object):
     """ZincBase uses this class automatically when you want to train a model from a KB.
     """
     def __init__(self, dataloader_head, dataloader_tail, dataloader_neg=None, neg_ratio=1):
@@ -176,3 +176,191 @@ class BidirectionalOneShotIterator(object):
         while True:
             for data in dataloader:
                 yield data
+
+class RedisGraph(Dataset):
+    def __init__(self, kb, mode, node_attributes=[], pred_attributes=[], negative_sample_size=2):
+        self.kb = kb
+        self.negative_sample_size = negative_sample_size
+        self.it = self.kb.redis.scan_iter('*__edge')
+        self.node_count = self.kb.redis.scard('node_set')
+        self.relation_count = self.kb.redis.scard('edge_set')
+        self.node_attributes = node_attributes
+        self.pred_attributes = pred_attributes
+        self.count = {}
+        self.true_head, self.true_tail = {}, {}
+        self.true_head_np, self.true_tail_np = {}, {}
+        self.mode = mode
+
+    def __getitem__(self, idx):
+        return self.__next__()
+
+    def __len__(self):
+        return len(self.kb.redis.keys('*__edge'))
+    def __iter__(self):
+        return self
+    def __next__(self):
+        edge_key = next(self.it)
+        edge = dill.loads(self.kb.redis.get(edge_key))
+        if edge.pred not in self.kb._relation2id:
+            self.kb._relation2id[edge.pred] = self.kb._seen_relations
+            self.kb._seen_relations += 1
+        sub, ob = edge.nodes
+        if sub._name not in self.kb._entity2id: # todo use a set for this check instead.
+            self.kb._entity2id[sub._name] = self.kb._seen_nodes
+            self.kb._seen_nodes += 1
+        if ob._name not in self.kb._entity2id:
+            self.kb._entity2id[ob._name] = self.kb._seen_nodes
+            self.kb._seen_nodes += 1
+        truthiness = edge.get('truthiness', False)
+        is_neg = truthiness and truthiness < 0
+        attrs = []
+        for attribute in self.node_attributes:
+            attr_sub = float(sub.attrs.get(attribute, 0.0))
+            attr_ob = float(ob.attrs.get(attribute, 0.0)) # wasnt there before! should be!
+            attrs += [attr_sub, attr_ob]
+        for pred_attr in self.pred_attributes:
+            if pred_attr == 'truthiness':
+                default_value = 1.
+            else:
+                default_value = 0.
+            attr = float(edge.attrs.get(pred_attr, default_value))
+            attrs.append(attr)
+
+        triple = (self.kb._entity2id[sub._name], self.kb._relation2id[edge.pred],
+                  self.kb._entity2id[ob._name], attrs, is_neg)
+        
+        start = 4 # magic
+        # The below subsampling ratio will get more accurate
+        # over time.
+        if (triple[0], triple[1]) not in self.count:
+            self.count[(triple[0], triple[1])] = start
+        else:
+            self.count[(triple[0], triple[1])] += 1
+        if (triple[2], -triple[1]-1) not in self.count:
+            self.count[(triple[2], -triple[1]-1)] = start
+        else:
+            self.count[(triple[2], -triple[1]-1)] += 1
+
+        subsampling_weight = self.count[(triple[0], triple[1])] + self.count[(triple[2], -triple[1]-1)]
+        subsampling_weight = torch.sqrt(1 / torch.Tensor([subsampling_weight]))
+
+        negative_sample_list = []
+        negative_sample_size = 0
+
+        # The accuracy of these will get better over time.
+        # TODO init these as defaultdict(list)
+        head, relation, tail = triple[:3]
+        if (head, relation) not in self.true_tail:
+            self.true_tail[(head, relation)] = []
+        self.true_tail[(head, relation)].append(tail)
+        if (relation, tail) not in self.true_head:
+            self.true_head[(relation, tail)] = []
+        # TODO this seems suboptimal, true_head/tail should be a set
+        self.true_head[(relation, tail)].append(head)
+
+        # TODO only recalculate these if something changed above.
+        for relation, tail in self.true_head:
+            self.true_head_np[(relation, tail)] = np.array(list(set(self.true_head[(relation, tail)])))
+        for head, relation in self.true_tail:
+            self.true_tail_np[(head, relation)] = np.array(list(set(self.true_tail[(head, relation)])))
+
+        #print(self.true_head_np, self.true_tail_np, self.kb._relation2id, self.kb._entity2id)
+        while negative_sample_size < self.negative_sample_size:
+            negative_sample = np.random.randint(self.node_count, size=self.negative_sample_size*2)
+            if self.mode == 'head-batch':
+                mask = np.in1d(
+                    negative_sample, 
+                    self.true_head_np[(relation, tail)], 
+                    assume_unique=True, 
+                    invert=True
+                )
+            elif self.mode == 'tail-batch':
+                mask = np.in1d(
+                    negative_sample, 
+                    self.true_tail_np[(head, relation)], 
+                    assume_unique=True, 
+                    invert=True
+                )
+            else:
+                raise ValueError('Training batch mode %s not supported' % self.mode)
+            negative_sample = negative_sample[mask]
+            negative_sample_list.append(negative_sample)
+            negative_sample_size += negative_sample.size
+        
+        negative_sample = np.concatenate(negative_sample_list)[:self.negative_sample_size]
+        negative_sample = torch.from_numpy(negative_sample).float()
+
+        tmp = [head, relation, tail]
+        for item in triple[3:]:
+            if isinstance(item, list) or isinstance(item, tuple):
+                for subitem in item:
+                    tmp.append(subitem)
+            else:
+                tmp.append(item)
+        positive_sample = tmp
+        positive_sample = torch.LongTensor(positive_sample) #TODO First 3 needs to be a longtensor, after that should be floats
+        return positive_sample, negative_sample, subsampling_weight, self.mode, is_neg
+    
+    @staticmethod
+    def collate_fn(data):
+        positive_sample = torch.stack([_[0] for _ in data], dim=0)
+        negative_sample = torch.stack([_[1] for _ in data], dim=0)
+        subsample_weight = torch.cat([_[2] for _ in data], dim=0)
+        mode = data[0][3]
+        true = data[0][4]
+        return positive_sample, negative_sample, subsample_weight, mode, true
+    
+    # def __init__(self, dataloader_head, dataloader_tail, dataloader_neg=None, neg_ratio=1):
+    #     self.iterator_head = self.one_shot_iterator(dataloader_head)
+    #     self.iterator_tail = self.one_shot_iterator(dataloader_tail)
+    #     self.neg = False
+    #     if dataloader_neg:
+    #         self.neg = True
+    #         self.neg_ratio = neg_ratio
+    #         self.iterator_neg = self.one_shot_iterator(dataloader_neg)
+    #     self.step = 0
+
+    # def __next__(self):
+    #     if self.neg:
+    #         return self.next_with_neg()
+    #     return self.next_no_neg()
+
+    # def next_with_neg(self):
+    #     self.step += 1
+    #     if self.step % self.neg_ratio == 0:
+    #         data = next(self.iterator_neg)
+    #     elif self.step % 2 == 0:
+    #         data = next(self.iterator_head)
+    #     else:
+    #         data = next(self.iterator_tail)
+    #     return data
+
+    # def next_no_neg(self):
+    #     self.step += 1
+    #     if self.step % 2 == 0:
+    #         data = next(self.iterator_head)
+    #     else:
+    #         data = next(self.iterator_tail)
+    #     return data
+
+    # @staticmethod
+    # def one_shot_iterator(dataloader):
+    #     while True:
+    #         for data in dataloader:
+    #             yield data
+
+# In [2]: x = TrainDataset([[0, 1, 2, [30,40], False], [3, 4, 5, [10,20], False]],
+#    ...:  5, 4, 'head-batch')                                                    
+
+# In [3]: [d for d in x]                                                          
+# Out[3]: 
+# [(tensor([ 0,  1,  2, 30, 40,  0]),
+#   tensor([1., 1., 1., 1.]),
+#   tensor([0.3536]),
+#   'head-batch',
+#   False),
+#  (tensor([ 3,  4,  5, 10, 20,  0]),
+#   tensor([0., 1., 0., 1.]),
+#   tensor([0.3536]),
+#   'head-batch',
+#   False)]
