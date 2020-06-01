@@ -32,7 +32,7 @@ from zincbase.logic.Term import Term
 
 from zincbase.logic.common import unify, process
 from zincbase.nn.dataloader import (NegDataset, 
-                TrainDataset, BidirectionalIterator,
+                BidirectionalIterator,
                 RedisGraph)
 from zincbase.nn.rotate import KGEModel
 from zincbase.utils.string_utils import strip_all_whitespace, split_to_parts, cleanse
@@ -636,6 +636,11 @@ class KB():
             self._cuda = True
             self._kg_model = self._kg_model.cuda()
 
+    def _add_entity(self, name, id_):
+        self._entity2id[name] = id_
+        # looks like will need to keep this in redis :(
+
+
     def train_kg_model(self, steps=1000, batch_size=512, lr=0.001,
                        reencode_triples=False, neg_to_pos=128,
                        neg_ratio=1., verbose=True):
@@ -657,23 +662,12 @@ class KB():
 
         nentity = self._kg_model.nentity
         nrelation = self._kg_model.nrelation
-        # import ipdb; ipdb.set_trace()
-        # train_dataloader_head = DataLoader(
-        #     TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'head-batch'),
-        #     batch_size=batch_size,
-        #     shuffle=True,
-        #     num_workers=1,
-        #     collate_fn=TrainDataset.collate_fn)
-        # train_dataloader_tail = DataLoader(
-        #     TrainDataset(self._encoded_triples, nrelation, neg_to_pos, 'tail-batch'),
-        #     batch_size=batch_size,
-        #     shuffle=True,
-        #     num_workers=1,
-        #     collate_fn=TrainDataset.collate_fn)
+
         head_graph = RedisGraph(self, 'head-batch', negative_sample_size=neg_to_pos)
+        tail_graph = RedisGraph(self, 'tail-batch', negative_sample_size=neg_to_pos)
         train_dataloader_head = DataLoader(head_graph,
             batch_size=batch_size, shuffle=True, num_workers=1, collate_fn=RedisGraph.collate_fn)
-        train_dataloader_tail = DataLoader(RedisGraph(self, 'tail-batch', negative_sample_size=neg_to_pos),
+        train_dataloader_tail = DataLoader(tail_graph,
             batch_size=batch_size, shuffle=True, num_workers=1, collate_fn=RedisGraph.collate_fn)
 
         if False: #len(self._neg_examples):
@@ -690,7 +684,6 @@ class KB():
         else:
             train_iterator = BidirectionalIterator(train_dataloader_head, train_dataloader_tail)
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self._kg_model.parameters()), lr=lr)
-        
         self._kg_model.train()
         if verbose:
             it = tqdm(range(0, steps))
@@ -701,6 +694,7 @@ class KB():
             if verbose and step % 100 == 0:
                 print(log)
         self._kg_model.eval()
+        import ipdb; ipdb.set_trace()
 
     def estimate_triple_prob(self, sub, pred, ob):
         """Estimate the probability of the triple (sub, pred, ob) according to the trained model."""

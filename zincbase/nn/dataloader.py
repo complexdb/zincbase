@@ -186,18 +186,16 @@ class RedisGraph(Dataset):
         self.relation_count = self.kb.redis.scard('edge_set')
         self.node_attributes = node_attributes
         self.pred_attributes = pred_attributes
-        self.count = {}
         self.true_head, self.true_tail = {}, {}
         self.true_head_np, self.true_tail_np = {}, {}
         self.mode = mode
-
+        
     def __getitem__(self, idx):
         return self.__next__()
 
     def __len__(self):
         return len(self.kb.redis.keys('*__edge'))
-    def __iter__(self):
-        return self
+
     def __next__(self):
         edge_key = next(self.it)
         edge = dill.loads(self.kb.redis.get(edge_key))
@@ -206,10 +204,12 @@ class RedisGraph(Dataset):
             self.kb._seen_relations += 1
         sub, ob = edge.nodes
         if sub._name not in self.kb._entity2id: # todo use a set for this check instead.
-            self.kb._entity2id[sub._name] = self.kb._seen_nodes
+            #self.kb._entity2id[sub._name] = self.kb._seen_nodes
+            self.kb._add_entity(sub._name, self.kb._seen_nodes)
             self.kb._seen_nodes += 1
         if ob._name not in self.kb._entity2id:
-            self.kb._entity2id[ob._name] = self.kb._seen_nodes
+            self.kb._add_entity(ob._name, self.kb._seen_nodes)
+            #self.kb._entity2id[ob._name] = self.kb._seen_nodes
             self.kb._seen_nodes += 1
         truthiness = edge.get('truthiness', False)
         is_neg = truthiness and truthiness < 0
@@ -229,23 +229,31 @@ class RedisGraph(Dataset):
         triple = (self.kb._entity2id[sub._name], self.kb._relation2id[edge.pred],
                   self.kb._entity2id[ob._name], attrs, is_neg)
         
+        #print(len(self.count))
         start = 4 # magic
         # The below subsampling ratio will get more accurate
         # over time.
-        if (triple[0], triple[1]) not in self.count:
-            self.count[(triple[0], triple[1])] = start
+        oh_one = str(triple[0]) + '___' + str(triple[1]) + '___count'
+        if not self.kb.redis.get(oh_one): #(triple[0], triple[1]) not in self.count:
+            #self.count[(triple[0], triple[1])] = start
+            self.kb.redis.set(oh_one, start)
         else:
-            self.count[(triple[0], triple[1])] += 1
-        if (triple[2], -triple[1]-1) not in self.count:
-            self.count[(triple[2], -triple[1]-1)] = start
-        else:
-            self.count[(triple[2], -triple[1]-1)] += 1
+            self.kb.redis.incr(oh_one, amount=1)
+            # self.count[(triple[0], triple[1])] += 1
 
-        subsampling_weight = self.count[(triple[0], triple[1])] + self.count[(triple[2], -triple[1]-1)]
+        two_one = str(triple[2]) + '___' + str(-triple[1]-1) + '___count'
+        if not self.kb.redis.get(two_one): #two_one not in self.count:
+            #self.count[(triple[2], -triple[1]-1)] = start
+            self.kb.redis.set(two_one, start)
+        else:
+            self.kb.redis.incr(two_one, amount=1)
+            #self.count[(triple[2], -triple[1]-1)] += 1
+
+        #subsampling_weight = self.count[(triple[0], triple[1])] + self.count[(triple[2], -triple[1]-1)]
+        subsampling_weight = int(self.kb.redis.get(oh_one)) + int(self.kb.redis.get(two_one))
         subsampling_weight = torch.sqrt(1 / torch.Tensor([subsampling_weight]))
 
         negative_sample_list = []
-        negative_sample_size = 0
 
         # The accuracy of these will get better over time.
         # TODO init these as defaultdict(list)
@@ -264,20 +272,28 @@ class RedisGraph(Dataset):
         for head, relation in self.true_tail:
             self.true_tail_np[(head, relation)] = np.array(list(set(self.true_tail[(head, relation)])))
 
-        #print(self.true_head_np, self.true_tail_np, self.kb._relation2id, self.kb._entity2id)
+        negative_sample_size = 0
         while negative_sample_size < self.negative_sample_size:
-            negative_sample = np.random.randint(self.node_count, size=self.negative_sample_size*2)
+            negative_sample = np.random.randint(len(self.kb._entity2id), size=self.negative_sample_size*2)
             if self.mode == 'head-batch':
+                if (relation, tail) not in self.true_head_np:
+                    list_true = []
+                else:
+                    list_true = self.true_head_np[(relation, tail)]
                 mask = np.in1d(
                     negative_sample, 
-                    self.true_head_np[(relation, tail)], 
+                    list_true, 
                     assume_unique=True, 
                     invert=True
                 )
             elif self.mode == 'tail-batch':
+                if (head, relation) not in self.true_head_np:
+                    list_true = []
+                else:
+                    list_true = self.true_head_np[(head, relation)]
                 mask = np.in1d(
                     negative_sample, 
-                    self.true_tail_np[(head, relation)], 
+                    list_true, 
                     assume_unique=True, 
                     invert=True
                 )
@@ -309,58 +325,3 @@ class RedisGraph(Dataset):
         mode = data[0][3]
         true = data[0][4]
         return positive_sample, negative_sample, subsample_weight, mode, true
-    
-    # def __init__(self, dataloader_head, dataloader_tail, dataloader_neg=None, neg_ratio=1):
-    #     self.iterator_head = self.one_shot_iterator(dataloader_head)
-    #     self.iterator_tail = self.one_shot_iterator(dataloader_tail)
-    #     self.neg = False
-    #     if dataloader_neg:
-    #         self.neg = True
-    #         self.neg_ratio = neg_ratio
-    #         self.iterator_neg = self.one_shot_iterator(dataloader_neg)
-    #     self.step = 0
-
-    # def __next__(self):
-    #     if self.neg:
-    #         return self.next_with_neg()
-    #     return self.next_no_neg()
-
-    # def next_with_neg(self):
-    #     self.step += 1
-    #     if self.step % self.neg_ratio == 0:
-    #         data = next(self.iterator_neg)
-    #     elif self.step % 2 == 0:
-    #         data = next(self.iterator_head)
-    #     else:
-    #         data = next(self.iterator_tail)
-    #     return data
-
-    # def next_no_neg(self):
-    #     self.step += 1
-    #     if self.step % 2 == 0:
-    #         data = next(self.iterator_head)
-    #     else:
-    #         data = next(self.iterator_tail)
-    #     return data
-
-    # @staticmethod
-    # def one_shot_iterator(dataloader):
-    #     while True:
-    #         for data in dataloader:
-    #             yield data
-
-# In [2]: x = TrainDataset([[0, 1, 2, [30,40], False], [3, 4, 5, [10,20], False]],
-#    ...:  5, 4, 'head-batch')                                                    
-
-# In [3]: [d for d in x]                                                          
-# Out[3]: 
-# [(tensor([ 0,  1,  2, 30, 40,  0]),
-#   tensor([1., 1., 1., 1.]),
-#   tensor([0.3536]),
-#   'head-batch',
-#   False),
-#  (tensor([ 3,  4,  5, 10, 20,  0]),
-#   tensor([0., 1., 0., 1.]),
-#   tensor([0.3536]),
-#   'head-batch',
-#   False)]
